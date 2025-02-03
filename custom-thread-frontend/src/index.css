@@ -77,29 +77,29 @@ button:focus-visible {
     :root {
         --background: 0 0% 100%;
         --foreground: 222.2 84% 4.9%;
-        
+
         /* New modern color scheme */
         --primary: 222.2 47.4% 11.2%;
         --primary-foreground: 210 40% 98%;
-        
+
         /* Vibrant secondary color */
         --secondary: 280 65% 55%;
         --secondary-foreground: 210 40% 98%;
-        
+
         /* Accent color for highlights */
         --accent: 170 75% 41%;
         --accent-foreground: 222.2 47.4% 11.2%;
-        
+
         /* Muted tones */
         --muted: 210 40% 96.1%;
         --muted-foreground: 215.4 16.3% 46.9%;
-        
+
         /* Card and popover backgrounds */
         --card: 0 0% 100%;
         --card-foreground: 222.2 84% 4.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 222.2 84% 4.9%;
-        
+
         /* Other utility colors */
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 210 40% 98%;
@@ -113,29 +113,29 @@ button:focus-visible {
     .dark {
         --background: 222.2 84% 4.9%;
         --foreground: 210 40% 98%;
-        
+
         /* Dark theme modern colors */
         --primary: 210 40% 98%;
         --primary-foreground: 222.2 47.4% 11.2%;
-        
+
         /* Vibrant secondary in dark */
         --secondary: 280 65% 60%;
         --secondary-foreground: 210 40% 98%;
-        
+
         /* Accent color for dark theme */
         --accent: 170 75% 45%;
         --accent-foreground: 210 40% 98%;
-        
+
         /* Muted dark tones */
         --muted: 217.2 32.6% 17.5%;
         --muted-foreground: 215 20.2% 65.1%;
-        
+
         /* Card and popover dark backgrounds */
         --card: 222.2 84% 4.9%;
         --card-foreground: 210 40% 98%;
         --popover: 222.2 84% 4.9%;
         --popover-foreground: 210 40% 98%;
-        
+
         /* Other utility colors for dark theme */
         --destructive: 0 62.8% 30.6%;
         --destructive-foreground: 210 40% 98%;
