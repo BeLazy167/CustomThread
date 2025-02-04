@@ -15,26 +15,20 @@ function App() {
                     <main className="flex-1">
                         <Routes>
                             <Route path="/" element={<Home />} />
+                            <Route
+                                path="/sign-in"
+                                element={
+                                    <SignIn routing="path" path="/sign-in" />
+                                }
+                            />
+                            <Route
+                                path="/sign-up"
+                                element={
+                                    <SignUp routing="path" path="/sign-up" />
+                                }
+                            />
                             <Route element={<ProtectedRoute />}>
                                 <Route path="/profile" element={<Profile />} />
-                                <Route
-                                    path="/sign-in"
-                                    element={
-                                        <SignIn
-                                            routing="path"
-                                            path="/sign-in"
-                                        />
-                                    }
-                                />
-                                <Route
-                                    path="/sign-up"
-                                    element={
-                                        <SignUp
-                                            routing="path"
-                                            path="/sign-up"
-                                        />
-                                    }
-                                />
                             </Route>
                         </Routes>
                     </main>
