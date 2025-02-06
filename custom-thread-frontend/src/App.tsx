@@ -11,7 +11,7 @@ function App() {
         <ThemeProvider defaultTheme="system" storageKey="ui-theme">
             <BrowserRouter>
                 <Nav />
-                <div className="min-h-screen bg-background mx-auto flex flex-col justify-center pt-16">
+                <div className="min-h-screen bg-background mx-auto flex flex-col justify-center pt-16 ">
                     <main className="flex-1">
                         <Routes>
                             <Route path="/" element={<Home />} />

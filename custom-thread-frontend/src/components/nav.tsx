@@ -15,7 +15,7 @@ export default function Nav() {
     return (
         <div className=" top-0 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto">
-                <nav className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between ">
+                <nav className="w-full min-w-7xl mx-auto flex h-16 items-center justify-between ">
                     <div className="flex-shrink-0">
                         <a
                             href="/"
