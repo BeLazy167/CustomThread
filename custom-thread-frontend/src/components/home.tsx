@@ -36,7 +36,7 @@ export function Home() {
 
     return (
         <div className="container mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
-            <div className="w-full max-w-5xl space-y-24 py-12">
+            <div className="w-full max-w-6xl space-y-24 py-12">
                 {/* Hero Section */}
                 <section>
                     <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-secondary/20 via-accent/10 to-primary/5 py-24">

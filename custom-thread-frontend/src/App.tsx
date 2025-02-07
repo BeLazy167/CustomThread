@@ -5,6 +5,8 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import { Home } from "./components/home";
+import "./App.css";
+import Product from "./pages/Product";
 
 function App() {
     return (
@@ -30,6 +32,9 @@ function App() {
                             <Route element={<ProtectedRoute />}>
                                 <Route path="/profile" element={<Profile />} />
                             </Route>
+                            
+                            <Route path="/product" element={<Product />} />
+                            
                         </Routes>
                     </main>
                 </div>
