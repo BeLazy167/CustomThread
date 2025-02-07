@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { AnimatedTestimonials } from "./ui/animated-testimonials";
 import { useNavigate } from "react-router-dom";
-
 export function Home() {
     const navigate = useNavigate();
     const testimonials = [

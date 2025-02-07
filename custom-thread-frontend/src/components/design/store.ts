@@ -10,5 +10,5 @@ interface State {
 export const state = proxy<State>({
     intro: true,
     color: new THREE.Color("#EFBD48"),
-    decal: "a", // or whatever your default decal is
+    decal: "b", // or whatever your default decal is
 });

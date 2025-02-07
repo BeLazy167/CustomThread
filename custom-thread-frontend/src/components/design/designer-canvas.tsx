@@ -8,6 +8,7 @@ import {
     Decal,
     Environment,
     Center,
+    PresentationControls,
 } from "@react-three/drei";
 import { easing } from "maath";
 import { useSnapshot } from "valtio";
@@ -48,13 +49,22 @@ const DesignerCanvas: React.FC<AppProps> = ({
             style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }}
         >
             <ambientLight intensity={0.5 * Math.PI} />
-            <Environment preset="city" />
-            <Backdrop />
-            <CameraRig>
-                <Center>
-                    <Shirt />
-                </Center>
-            </CameraRig>
+            <PresentationControls
+                global
+                config={{ mass: 2, tension: 500 }}
+                snap={{ mass: 4, tension: 1500 }}
+                rotation={[0, 0.3, 0]}
+                polar={[-Math.PI / 3, Math.PI / 3]}
+                azimuth={[-Math.PI / 1.4, Math.PI / 2]}
+            >
+                <Environment preset="city" />
+                <Backdrop />
+                <CameraRig>
+                    <Center>
+                        <Shirt />
+                    </Center>
+                </CameraRig>
+            </PresentationControls>
         </Canvas>
 
         <motion.div
@@ -172,7 +182,6 @@ function Backdrop() {
 
 function CameraRig({ children }: { children: React.ReactNode }) {
     const group = useRef<Group>(null!);
-    const snap = useSnapshot(state);
     const { camera, pointer } = useThree();
 
     useFrame((state, delta) => {

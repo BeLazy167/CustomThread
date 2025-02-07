@@ -13,10 +13,10 @@ export default function Nav() {
     const { theme, setTheme } = useTheme();
 
     return (
-        <div className=" top-0 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className=" w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-neutral-800 dark:bg-background/5 dark:backdrop-blur-none dark:supports-[backdrop-filter]:bg-background/90">
             <div className="container mx-auto">
                 <nav className="w-full min-w-7xl mx-auto flex h-16 items-center justify-between ">
-                    <div className="flex-shrink-0">
+                    <div className="">
                         <a
                             href="/"
                             className="text-xl font-bold bg-gradient-to-r from-secondary via-accent to-primary bg-clip-text text-transparent"
