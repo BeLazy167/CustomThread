@@ -13,6 +13,16 @@ import { easing } from "maath";
 import { useSnapshot } from "valtio";
 import { state } from "./store";
 import { Group, Material } from "three";
+import { motion } from "framer-motion";
+import { FloatingDock } from "../ui/floating-dock";
+import {
+    IconPalette,
+    IconUpload,
+    IconRotate360,
+    IconDownload,
+} from "@tabler/icons-react";
+import * as THREE from "three";
+import { cn } from "@/lib/utils";
 
 interface AppProps {
     position?: [number, number, number];
@@ -23,23 +33,93 @@ const DesignerCanvas: React.FC<AppProps> = ({
     position = [0, 0, 2.5],
     fov = 25,
 }) => (
-    <Canvas
-        shadows
-        camera={{ position, fov }}
-        gl={{ preserveDrawingBuffer: true, antialias: true }}
-        eventPrefix="client"
-        className="w-full h-full"
-        style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }}
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative w-full h-full"
     >
-        <ambientLight intensity={0.5 * Math.PI} />
-        <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
-        <CameraRig>
+        <Canvas
+            shadows
+            camera={{ position, fov }}
+            gl={{ preserveDrawingBuffer: true, antialias: true }}
+            eventPrefix="client"
+            className="w-full h-full"
+            style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }}
+        >
+            <ambientLight intensity={0.5 * Math.PI} />
+            <Environment preset="city" />
             <Backdrop />
-            <Center>
-                <Shirt />
-            </Center>
-        </CameraRig>
-    </Canvas>
+            <CameraRig>
+                <Center>
+                    <Shirt />
+                </Center>
+            </CameraRig>
+        </Canvas>
+
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute bottom-8 left-0 right-0 flex justify-center px-4"
+        >
+            <FloatingDock
+                desktopClassName="w-half max-w-2xl bg-background/80 dark:bg-background/50 backdrop-blur-md border border-border shadow-lg"
+                mobileClassName="w-full max-w-[90%] mx-auto"
+                items={[
+                    {
+                        title: "Color Picker",
+                        icon: (
+                            <IconPalette
+                                className={cn(
+                                    "h-full w-full",
+                                    "transition-colors duration-200",
+                                    "text-foreground/80 dark:text-foreground/70"
+                                )}
+                            />
+                        ),
+                        onClick: () => {
+                            const input = document.createElement("input");
+                            input.type = "color";
+                            input.value = `#${state.color.getHexString()}`;
+                            input.addEventListener("input", (e) => {
+                                state.color = new THREE.Color(
+                                    (e.target as HTMLInputElement).value
+                                );
+                            });
+                            input.click();
+                        },
+                    },
+                    {
+                        title: "Upload Logo",
+                        icon: (
+                            <IconUpload className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+                        ),
+                        onClick: () => {
+                            /* implement later */
+                        },
+                    },
+                    {
+                        title: "Rotate View",
+                        icon: (
+                            <IconRotate360 className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+                        ),
+                        onClick: () => {
+                            /* implement later */
+                        },
+                    },
+                    {
+                        title: "Download",
+                        icon: (
+                            <IconDownload className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+                        ),
+                        onClick: () => {
+                            /* implement later */
+                        },
+                    },
+                ]}
+            />
+        </motion.div>
+    </motion.div>
 );
 
 function Backdrop() {
@@ -93,15 +173,10 @@ function Backdrop() {
 function CameraRig({ children }: { children: React.ReactNode }) {
     const group = useRef<Group>(null!);
     const snap = useSnapshot(state);
-    const { camera, pointer, viewport } = useThree();
+    const { camera, pointer } = useThree();
 
     useFrame((state, delta) => {
-        easing.damp3(
-            camera.position,
-            [snap.intro ? -viewport.width / 4 : 0, 0, 2],
-            0.25,
-            delta
-        );
+        easing.damp3(camera.position, [0, 0, 2.5], 0.25, delta);
         easing.dampE(
             group.current.rotation,
             [pointer.y / 10, pointer.x / 5, 0],
@@ -115,7 +190,7 @@ function CameraRig({ children }: { children: React.ReactNode }) {
 
 function Shirt(props: MeshProps) {
     const snap = useSnapshot(state);
-    const texture = useTexture(`/src/assets/${snap.decal}.svg`);
+    const texture = useTexture(`/src/assets/${snap.decal}.png`);
 
     const { nodes, materials } = useGLTF(
         "/src/assets/shirt_baked_collapsed.glb"
@@ -154,6 +229,6 @@ function Shirt(props: MeshProps) {
 }
 
 useGLTF.preload("../../assets/shirt_baked.glb");
-["/react.svg"].forEach(useTexture.preload);
+["/react.png"].forEach(useTexture.preload);
 
 export default DesignerCanvas;

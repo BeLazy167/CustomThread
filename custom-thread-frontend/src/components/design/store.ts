@@ -1,18 +1,14 @@
 import { proxy } from "valtio";
+import * as THREE from "three";
+
 interface State {
     intro: boolean;
-    colors: string[];
-    decals: string[];
-    color: string;
+    color: THREE.Color;
     decal: string;
 }
 
-const state = proxy<State>({
-    intro: false,
-    colors: ["#ccc", "#EFBD4E", "#80C670", "#726DE8", "#EF674E", "#353934"],
-    decals: ["react"],
-    color: "#80C670",
-    decal: "react",
+export const state = proxy<State>({
+    intro: true,
+    color: new THREE.Color("#EFBD48"),
+    decal: "a", // or whatever your default decal is
 });
-
-export { state, type State };
