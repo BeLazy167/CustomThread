@@ -11,8 +11,9 @@ import {
     Zap,
 } from "lucide-react";
 import { AnimatedTestimonials } from "./ui/animated-testimonials";
-
+import { useNavigate } from "react-router-dom";
 export function Home() {
+    const navigate = useNavigate();
     const testimonials = [
         {
             quote: "The quality of the custom designs and the quick turnaround time exceeded my expectations. Highly recommend!",
@@ -49,7 +50,11 @@ export function Home() {
                                 Transform Your Ideas into Wearable Art
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Button size="lg" className="gap-2 text-lg">
+                                <Button
+                                    size="lg"
+                                    className="gap-2 text-lg"
+                                    onClick={() => navigate("/design")}
+                                >
                                     <Palette className="w-5 h-5" />
                                     Start Designing
                                     <ArrowRight className="w-4 h-4" />
