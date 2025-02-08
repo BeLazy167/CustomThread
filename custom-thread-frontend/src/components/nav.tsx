@@ -17,11 +17,12 @@ const ThemeToggle = () => {
         <Button
             variant="ghost"
             size="icon"
+            className="bg-transparent border-none focus:ring-0"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
         >
-            <SunIcon className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <MoonIcon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <SunIcon className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-black" />
+            <MoonIcon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-white" />
         </Button>
     );
 };
@@ -61,7 +62,7 @@ export default function Nav() {
     }
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-neutral-200/30 bg-transparent dark:border-neutral-800/30">
+        <header className=" top-0 z-50 w-full border-b border-neutral-200/30 bg-transparent dark:border-neutral-800/30">
             <div className="max-w-[1920px] px-4 mx-auto">
                 <nav className="flex h-16 items-center justify-between">
                     <a
