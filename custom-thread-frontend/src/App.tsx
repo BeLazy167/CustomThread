@@ -32,9 +32,8 @@ function App() {
                             <Route element={<ProtectedRoute />}>
                                 <Route path="/design" element={<Design />} />
                             </Route>
-                            
+
                             <Route path="/product" element={<Product />} />
-                            
                         </Routes>
                     </main>
                 </div>

@@ -73,7 +73,7 @@ const DesignerCanvas: React.FC<AppProps> = ({
             className="absolute bottom-8 left-0 right-0 flex justify-center px-4"
         >
             <FloatingDock
-                desktopClassName="w-half max-w-2xl bg-background/80 dark:bg-background/50 backdrop-blur-md border border-border shadow-lg"
+                desktopClassName="w-half max-w-2xl bg-background/80 dark:bg-background/50 backdrop-blur-md border border-border shadow-lg "
                 mobileClassName="w-full max-w-[90%] mx-auto"
                 items={[
                     {

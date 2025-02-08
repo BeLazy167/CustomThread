@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react";
-import ProductInfo from "../components/Products/Components/ProductInfo";
-import { ZoomModal } from "../components/Products/Components/ZoomModal";
+import ProductInfo from "../components/products/product-info";
+import { ZoomModal } from "../components/products/zoom-modal";
 import tShirt from "../assets/tShirt.webp";
 
 export default function Product() {
