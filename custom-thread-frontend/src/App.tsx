@@ -7,6 +7,7 @@ import { Home } from "./components/home";
 import Design from "./pages/Design";
 import "./App.css";
 import Product from "./pages/Product";
+import ProfilePage from "./components/profile/ProfilePage";
 
 function App() {
     return (
@@ -34,6 +35,7 @@ function App() {
                             </Route>
 
                             <Route path="/product" element={<Product />} />
+                            <Route path="/profile" element={<ProfilePage />} />
                         </Routes>
                     </main>
                 </div>
