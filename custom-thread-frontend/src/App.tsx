@@ -8,6 +8,7 @@ import Design from "./pages/Design";
 import "./App.css";
 import Product from "./pages/Product";
 import ProfilePage from "./components/profile/ProfilePage";
+import ProductsPage from "./components/product_list/Products";
 
 function App() {
     return (
@@ -36,6 +37,8 @@ function App() {
 
                             <Route path="/product" element={<Product />} />
                             <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/products" element={<ProductsPage />} />
+                            <Route path="/product-info/:id" element={<Product />} />
                         </Routes>
                     </main>
                 </div>

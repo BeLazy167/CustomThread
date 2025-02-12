@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ProductInfo from "../components/products/product-info";
 import { ZoomModal } from "../components/products/zoom-modal";
-import tShirt from "../assets/tShirt.webp";
+import tShirt from "@/assets/tShirt.webp";
 
 export default function Product() {
   const [isZoomOpen, setIsZoomOpen] = useState(false)
@@ -19,7 +19,7 @@ export default function Product() {
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <img src={tShirt} />
-          <ProductInfo onAddToCart={handleAddToCart} />
+          <ProductInfo />
         </div>
       </div>
       <ZoomModal isOpen={isZoomOpen} onClose={() => setIsZoomOpen(false)} imageSrc={imageSrc} />

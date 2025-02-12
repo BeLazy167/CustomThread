@@ -10,10 +10,12 @@ interface ProductInfoProps {
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
-export default function ProductInfo({ onAddToCart }: ProductInfoProps) {
+export default function ProductInfo() {
   const [selectedSize, setSelectedSize] = useState("M");
   const [isFavorited, setIsFavorited] = useState(false);
-
+  const onAddToCart = () => {
+    console.log('Added')
+  }
   return (
     <div className="sticky top-8 space-y-6 max-w-md mx-auto">
       {/* Product Title and Price */}
@@ -53,7 +55,7 @@ export default function ProductInfo({ onAddToCart }: ProductInfoProps) {
           size="lg"
           className="w-full bg-black text-white hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed border border-black dark:border-white"
           disabled={!selectedSize}
-          onClick={() => selectedSize && onAddToCart(selectedSize)}
+          onClick={() => selectedSize && onAddToCart()}
         >
           Add to bag
         </Button>

@@ -10,6 +10,8 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { DollarSign, ShoppingBag, TrendingUp, Users, Mail, MapPin, Calendar, Palette } from "lucide-react"
 
+
+
 const chartColor = "#8884d8" // A soft purple that works well on both light and dark backgrounds
 
 const initialUserData = {
