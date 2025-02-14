@@ -9,11 +9,6 @@ export default function Product() {
   const [isZoomOpen, setIsZoomOpen] = useState(false)
   const imageSrc = tShirt
 
-  const handleAddToCart = (size: string) => {
-    console.log(`Added to cart: UltraComfort Tee, Size: ${size}`)
-    // Here you would typically update your cart state or send a request to your backend
-  }
-
   return (
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-8">

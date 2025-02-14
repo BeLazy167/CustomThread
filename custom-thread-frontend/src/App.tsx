@@ -5,10 +5,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import { Home } from "./components/home";
 import Design from "./pages/Design";
-import "./App.css";
 import Product from "./pages/Product";
 import ProfilePage from "./components/profile/ProfilePage";
 import ProductsPage from "./components/product_list/Products";
+import CheckoutPage from "./components/checkout/CheckoutPage";
+// import Sidebar from "./components/sidebar/Sidebar";
+
 
 function App() {
     return (
@@ -19,26 +21,16 @@ function App() {
                     <main className="flex-1">
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            <Route
-                                path="/sign-in"
-                                element={
-                                    <SignIn routing="path" path="/sign-in" />
-                                }
-                            />
-                            <Route
-                                path="/sign-up"
-                                element={
-                                    <SignUp routing="path" path="/sign-up" />
-                                }
-                            />
+                            <Route path="/sign-in" element={<SignIn routing="path" path="/sign-in" />} />
+                            <Route path="/sign-up" element={<SignUp routing="path" path="/sign-up" />} />
                             <Route element={<ProtectedRoute />}>
                                 <Route path="/design" element={<Design />} />
                             </Route>
-
-                            <Route path="/product" element={<Product />} />
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/products" element={<ProductsPage />} />
                             <Route path="/product-info/:id" element={<Product />} />
+                            <Route path="/checkout" element={<CheckoutPage />} />
+                            {/* <Route index={true} element={<Sidebar />} /> */}
                         </Routes>
                     </main>
                 </div>

@@ -36,7 +36,7 @@ const salesData = [
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("details")
-  const [userData, setinitialUserData] = useState(initialUserData)
+  const [userData, setUserData] = useState(initialUserData)
   const [editData, setEditData] = useState(initialUserData)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,8 +46,12 @@ export default function ProfilePage() {
   }
 
   const handleSave = () => {
-    console.log(editData);
-    setinitialUserData(editData)
+    if (!editData.name || !editData.email) {
+         // Use your UI's toast or alert system
+          alert('Name and email are required');
+          return;
+        }
+    setUserData(editData)
   }
   return (
     <div className="container mx-auto p-4">

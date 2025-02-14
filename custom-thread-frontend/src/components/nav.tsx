@@ -63,7 +63,7 @@ export default function Nav() {
 
     return (
         <header className=" top-0 z-50 w-full border-b border-neutral-200/30 bg-transparent dark:border-neutral-800/30">
-            <div className="max-w-[1920px] px-4 mx-auto">
+            <div className="w-full mx-auto">
                 <nav className="flex h-16 items-center justify-between">
                     <a
                         href="/"
