@@ -17,7 +17,7 @@ const ThemeToggle = () => {
         <Button
             variant="ghost"
             size="icon"
-            className="bg-transparent border-none focus:ring-0"
+            className="bg-transparent border-none focus:ring-2 focus:ring-primary/20"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
         >
