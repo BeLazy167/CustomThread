@@ -47,8 +47,15 @@ const FloatingDockMobile = ({
     className?: string;
 }) => {
     const [open, setOpen] = useState(false);
+
     return (
-        <div className={cn("relative block md:hidden", className)}>
+        <div
+            className={cn(
+                "relative block md:hidden",
+                "fixed bottom-4 left-4 right-4 z-50",
+                className
+            )}
+        >
             <AnimatePresence>
                 {open && (
                     <motion.div
@@ -59,28 +66,25 @@ const FloatingDockMobile = ({
                             <motion.div
                                 key={item.title}
                                 initial={{ opacity: 0, y: 10 }}
-                                animate={{
-                                    opacity: 1,
-                                    y: 0,
-                                }}
+                                animate={{ opacity: 1, y: 0 }}
                                 exit={{
                                     opacity: 0,
                                     y: 10,
-                                    transition: {
-                                        delay: idx * 0.05,
-                                    },
+                                    transition: { delay: idx * 0.05 },
                                 }}
                                 transition={{
                                     delay: (items.length - 1 - idx) * 0.05,
                                 }}
                             >
-                                <Link
-                                    to={item.href ?? ""}
-                                    key={item.title}
-                                    className="h-10 w-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center"
+                                <button
+                                    onClick={item.onClick}
+                                    className="w-full h-12 rounded-lg bg-background/95 backdrop-blur-sm border border-border flex items-center justify-between px-4"
                                 >
-                                    <div className="h-4 w-4">{item.icon}</div>
-                                </Link>
+                                    <span className="text-sm font-medium">
+                                        {item.title}
+                                    </span>
+                                    <div className="h-5 w-5">{item.icon}</div>
+                                </button>
                             </motion.div>
                         ))}
                     </motion.div>
@@ -88,9 +92,9 @@ const FloatingDockMobile = ({
             </AnimatePresence>
             <button
                 onClick={() => setOpen(!open)}
-                className="h-10 w-10 rounded-full bg-gray-50 dark:bg-neutral-800 flex items-center justify-center"
+                className="w-full h-12 rounded-lg bg-background/95 backdrop-blur-sm border border-border flex items-center justify-center"
             >
-                <IconLayoutNavbarCollapse className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                <IconLayoutNavbarCollapse className="h-5 w-5 text-foreground/70" />
             </button>
         </div>
     );
