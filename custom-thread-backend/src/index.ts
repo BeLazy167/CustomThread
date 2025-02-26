@@ -1,32 +1,23 @@
 import express from "express";
-import designRoutes from "./routes/design.routes";
+import designRoutes from "./routes/designRoute";
 import { errorMiddleware } from "./middlewares/error.middleware";
-import { connectMongo } from "./db/mongo";
-import { uploadRouter } from "./uploadthing";
-import { createRouteHandler } from "uploadthing/express";
+import connectDb from "./config/database";
+
+
 
 const app = express();
 const port = process.env.PORT || 3001;
+connectDb();
 
 app.use(express.json());
 
+
 // Routes
-app.use("/api/designs", designRoutes);
+app.use("/api/v1/designs", designRoutes);
 
 // Error handling
 app.use(errorMiddleware);
 
-// Initialize databases and start server
-const initializeApp = async () => {
-    try {
-        await connectMongo();
-        app.listen(port, () => {
-            console.log(`Server running at http://localhost:${port}`);
-        });
-    } catch (error) {
-        console.error("Failed to initialize app:", error);
-        process.exit(1);
-    }
-};
-
-initializeApp();
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

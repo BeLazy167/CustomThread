@@ -1,34 +1,22 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
-import { MongoClient } from "mongodb";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
-
 dotenv.config();
 
-// PostgreSQL Configuration
-if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is not defined");
-}
-
-const sql = neon(process.env.DATABASE_URL);
-export const db = drizzle(sql);
-
-// MongoDB Configuration
-if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI environment variable is not defined");
-}
-
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
-
-export const connectMongo = async () => {
+const connectDb = async (): Promise<void> => {
     try {
-        await mongoClient.connect();
-        console.log("Connected to MongoDB");
-        return mongoClient.db(process.env.MONGODB_DB_NAME || "custom-thread");
-    } catch (error) {
-        console.error("MongoDB connection error:", error);
-        throw error;
+        const mongoUri = process.env.MONGODB_URI;
+        
+        if (!mongoUri) {
+            throw new Error("MongoDB URI is not defined in environment variables");
+        }
+
+        const conn = await mongoose.connect(mongoUri);
+        console.log(`MongoDB connected at host - ${conn.connection.host}`);
+        
+    } catch (error: any) {
+        console.log("Error:",  error.message );
+        process.exit(1);
     }
 };
 
-export const getMongoClient = () => mongoClient;
+export default connectDb;
