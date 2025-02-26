@@ -25,7 +25,7 @@ export function ShirtModel(props: MeshProps) {
         snap.clothingModels[snap.clothingType]
     );
 
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         easing.dampC(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (materials.lambert1 as any).color,
