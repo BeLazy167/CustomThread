@@ -16,6 +16,8 @@ import { X, Plus, Sparkles, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useDesignDetails } from "@/store";
+import { ZodIssue } from "zod";
+import { useToast } from "@/hooks/use-toast";
 
 interface DesignDetailsModalProps {
     open: boolean;
@@ -49,6 +51,7 @@ export function DesignDetailsModal({
         validationErrors,
         resetDetails,
     } = useDesignDetails();
+    const { toast } = useToast();
     const [newTag, setNewTag] = useState("");
 
     const handleAddTag = () => {
@@ -66,8 +69,25 @@ export function DesignDetailsModal({
 
     const handleSave = () => {
         if (validateDetails()) {
-            onSave();
-            onOpenChange(false);
+            try {
+                onSave();
+                onOpenChange(false);
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description:
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to save design details",
+                    variant: "destructive",
+                });
+            }
+        } else {
+            toast({
+                title: "Validation Error",
+                description: "Please check the form for errors",
+                variant: "destructive",
+            });
         }
     };
 
@@ -80,7 +100,7 @@ export function DesignDetailsModal({
     const getFieldError = (fieldName: string) => {
         if (!validationErrors) return null;
         return validationErrors.errors.find(
-            (error) => error.path[0] === fieldName
+            (error: ZodIssue) => error.path[0] === fieldName
         )?.message;
     };
 
@@ -213,9 +233,9 @@ export function DesignDetailsModal({
                                     layout
                                 >
                                     <AnimatePresence mode="popLayout">
-                                        {details.tags.map((tag) => (
+                                        {details.tags.map((tag, index) => (
                                             <motion.div
-                                                key={tag}
+                                                key={`${tag}-${index}`}
                                                 initial={{
                                                     scale: 0.8,
                                                     opacity: 0,

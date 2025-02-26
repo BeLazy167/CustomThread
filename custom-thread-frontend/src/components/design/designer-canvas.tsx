@@ -1,16 +1,13 @@
-import { useEffect, Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Center, PresentationControls } from "@react-three/drei";
-import { state, cycleClothingType } from "./store";
+import { state } from "./store";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 import { Upload, Send, Info } from "lucide-react";
 import * as THREE from "three";
 import { cn } from "@/lib/utils";
 import { changeLogoDecal } from "@/hooks/use-upload-image";
 import { useToast } from "@/hooks/use-toast";
-import { useMobileDetect } from "@/hooks/use-mobile-detect";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { useStore } from "@/store";
 import { useSubmitDesign } from "@/mutations/use-submit-design";
@@ -33,32 +30,31 @@ const DesignerCanvas: React.FC<AppProps> = ({
     fov = 25,
 }) => {
     const { toast } = useToast();
-    const isMobile = useMobileDetect();
-    const navigate = useNavigate();
+
     const mouseX = useMotionValue(Infinity);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const { details, saveDetails } = useStore();
     const submitDesignMutation = useSubmitDesign();
 
-    useEffect(() => {
-        if (isMobile) {
-            toast({
-                title: "Desktop Recommended",
-                description:
-                    "Please use a desktop browser for the best experience.",
-                variant: "default",
-                action: (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate("/")}
-                    >
-                        Go Home
-                    </Button>
-                ),
-            });
-        }
-    }, [isMobile, navigate, toast]);
+    // useEffect(() => {
+    //     if (isMobile) {
+    //         toast({
+    //             title: "Desktop Recommended",
+    //             description:
+    //                 "Please use a desktop browser for the best experience.",
+    //             variant: "default",
+    //             action: (
+    //                 <Button
+    //                     variant="outline"
+    //                     size="sm"
+    //                     onClick={() => navigate("/")}
+    //                 >
+    //                     Go Home
+    //                 </Button>
+    //             ),
+    //         });
+    //     }
+    // }, [isMobile, navigate, toast]);
 
     const handleFileUpload = useMemo(
         () => (event: Event) => {
@@ -100,32 +96,68 @@ const DesignerCanvas: React.FC<AppProps> = ({
     };
 
     const handleSubmitDesign = async () => {
+        if (!details.title) {
+            toast({
+                title: "Error",
+                description: "Please add a title for your design",
+                variant: "destructive",
+            });
+            setDetailsOpen(true);
+            return;
+        }
+
         try {
             // Capture the canvas as a base64 image
             const canvas = document.querySelector("canvas");
             if (!canvas) throw new Error("Canvas not found");
 
             const imageData = canvas.toDataURL("image/png");
-            await submitDesignMutation.mutateAsync(imageData);
+
+            await submitDesignMutation.mutateAsync(imageData, {
+                onSuccess: () => {
+                    toast({
+                        title: "Success",
+                        description:
+                            "Your design has been submitted successfully!",
+                    });
+                    // Optional: Navigate to a success page or designs list
+                    // navigate("/designs");
+                },
+                onError: (error) => {
+                    toast({
+                        title: "Error",
+                        description:
+                            error instanceof Error
+                                ? error.message
+                                : "Failed to submit design",
+                        variant: "destructive",
+                    });
+                },
+            });
         } catch (error) {
             console.error("Failed to submit design:", error);
+            toast({
+                title: "Error",
+                description: "Failed to capture design image",
+                variant: "destructive",
+            });
         }
     };
 
-    if (isMobile) {
-        return (
-            <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4 text-center">
-                <h1 className="text-2xl font-bold mb-4">
-                    Desktop Version Required
-                </h1>
-                <p className="text-muted-foreground mb-8">
-                    Our 3D designer requires a desktop browser for the best
-                    experience. Please switch to a desktop device to continue.
-                </p>
-                <Button onClick={() => navigate("/")}>Return to Home</Button>
-            </div>
-        );
-    }
+    // if (isMobile) {
+    //     return (
+    //         <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4 text-center">
+    //             <h1 className="text-2xl font-bold mb-4">
+    //                 Desktop Version Required
+    //             </h1>
+    //             <p className="text-muted-foreground mb-8">
+    //                 Our 3D designer requires a desktop browser for the best
+    //                 experience. Please switch to a desktop device to continue.
+    //             </p>
+    //             <Button onClick={() => navigate("/")}>Return to Home</Button>
+    //         </div>
+    //     );
+    // }
 
     return (
         <AnimatePresence>
