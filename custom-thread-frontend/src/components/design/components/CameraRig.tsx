@@ -11,7 +11,7 @@ export function CameraRig({ children }: CameraRigProps) {
     const group = useRef<Group>(null!);
     const { camera, pointer } = useThree();
 
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         easing.damp3(camera.position, [0, 0, 2.5], 0.25, delta);
         easing.dampE(
             group.current.rotation,

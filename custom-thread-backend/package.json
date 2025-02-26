@@ -16,6 +16,7 @@
     "type": "commonjs",
     "dependencies": {
         "@neondatabase/serverless": "^0.10.4",
+        "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "drizzle-orm": "^0.39.2",
         "drizzle-zod": "^0.7.0",

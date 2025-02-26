@@ -22,7 +22,7 @@ interface DesignSubmission {
 
 const submitDesign = async (data: DesignSubmission) => {
     const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/designs`,
+        `${import.meta.env.VITE_API_URL}/api/v1/designs`,
         {
             method: "POST",
             headers: {
