@@ -4,18 +4,19 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
+        BASE_DIR = '/home/ec2-user/customthreads'  // Define base directory
     }
 
     stages {
         stage('Create Directory') {
             steps {
-                sh 'mkdir -p customthreads'  // Create the customthreads directory
+                sh 'mkdir -p $BASE_DIR'  // Create the customthreads directory in /home/ec2-user
             }
         }
 
         stage('Clone Repository') {
             steps {
-                dir('customthreads') {  // Clone into customthreads directory
+                dir("$BASE_DIR") {  // Clone into the /home/ec2-user/customthreads directory
                     git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
                 }
             }
@@ -23,7 +24,7 @@ pipeline {
 
         stage('Navigate to Frontend Directory') {
             steps {
-                dir('customthreads/custom-thread-frontend') {
+                dir("$BASE_DIR/custom-thread-frontend") {
                     echo 'Inside frontend directory'
                 }
             }
@@ -31,7 +32,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                dir('customthreads/custom-thread-frontend') {
+                dir("$BASE_DIR/custom-thread-frontend") {
                     sh 'npm install'
                 }
             }
@@ -39,7 +40,7 @@ pipeline {
 
         stage('Build React App') {
             steps {
-                dir('customthreads/custom-thread-frontend') {
+                dir("$BASE_DIR/custom-thread-frontend") {
                     sh 'npm run build'
                 }
             }
@@ -47,7 +48,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir('customthreads/custom-thread-frontend') {
+                dir("$BASE_DIR/custom-thread-frontend") {
                     sh 'docker build -t $IMAGE_NAME .'
                 }
             }
