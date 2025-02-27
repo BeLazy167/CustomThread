@@ -19,7 +19,7 @@ FROM nginx:alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy the built React app from the build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy a custom Nginx configuration to set it to listen on port 3000
 COPY nginx.conf /etc/nginx/nginx.conf
