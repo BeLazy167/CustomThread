@@ -70,7 +70,7 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful! Access your app at http://52.207.212.245"
+            echo "Deployment Successful! Access your app at http://34.207.191.241"
         }
         failure {
             echo "Deployment Failed!"
