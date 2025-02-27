@@ -4,19 +4,19 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        BASE_DIR = '/home/ec2-user/customthreads'  // Define base directory
+        BASE_DIR = 'customthreads'  // Use relative path for Jenkins workspace
     }
 
     stages {
         stage('Create Directory') {
             steps {
-                sh 'mkdir -p $BASE_DIR'  // Create the customthreads directory in /home/ec2-user
+                sh 'mkdir -p $BASE_DIR'  // Create the customthreads directory in Jenkins workspace
             }
         }
 
         stage('Clone Repository') {
             steps {
-                dir("$BASE_DIR") {  // Clone into the /home/ec2-user/customthreads directory
+                dir("$BASE_DIR") {  // Clone into the customthreads directory inside the workspace
                     git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
                 }
             }
@@ -70,7 +70,7 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful! Access your app at http://34.207.191.241"
+            echo "Deployment Successful! Access your app at http://52.207.212.245"
         }
         failure {
             echo "Deployment Failed!"
