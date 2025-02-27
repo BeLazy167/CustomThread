@@ -9,7 +9,8 @@ import Product from "./pages/Product";
 import ProfilePage from "./components/profile/ProfilePage";
 import ProductsPage from "./components/product_list/Products";
 import CheckoutPage from "./components/checkout/CheckoutPage";
-// import Sidebar from "./components/sidebar/Sidebar";
+// import Sidebar from "./components/sidebar/Sidebar";\
+import Receipt from "./components/receipt /Receipt";
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
                             <Route path="/product-info/:id" element={<Product />} />
                             <Route path="/checkout" element={<CheckoutPage />} />
                             {/* <Route index={true} element={<Sidebar />} /> */}
+                            <Route path="/receipt" element={<Receipt />} />
                         </Routes>
                     </main>
                 </div>

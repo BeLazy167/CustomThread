@@ -41,7 +41,18 @@ import {
 
 const chartColor = "#8884d8"; // A soft purple that works well on both light and dark backgrounds
 
-const initialUserData = {
+// Define types for our user data
+interface UserData {
+    name: string;
+    username: string;
+    bio: string;
+    email: string;
+    location: string;
+    memberSince: string;
+    specialties: string[];
+}
+
+const initialUserData: UserData = {
     name: "Jane Doe",
     username: "@janedoe",
     bio: "Fashion designer passionate about sustainable and customizable clothing.",
@@ -51,21 +62,23 @@ const initialUserData = {
     specialties: ["T-shirts", "Hoodies"],
 };
 
+// Sample data for designs
 const userDesigns = [
     {
         id: 1,
         name: "Summer Breeze Tee",
         sales: 150,
-        image: "https://via.placeholder.com/100",
+        image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
     },
     {
         id: 2,
         name: "Urban Night Hoodie",
         sales: 120,
-        image: "https://via.placeholder.com/100",
+        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
     },
 ];
 
+// Sample data for sales chart
 const salesData = [
     { name: "Summer Breeze Tee", sales: 150 },
     { name: "Urban Night Hoodie", sales: 120 },
