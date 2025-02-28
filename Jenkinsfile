@@ -4,7 +4,6 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        SLACK_CHANNEL = "team4"  
     }
 
     stages {
@@ -60,20 +59,9 @@ pipeline {
     post {
         success {
             echo "Deployment Successful!"
-            sendSlackNotification("✅ *Deployment Successful!* 🎉\nYour app is live", "good")
         }
         failure {
             echo "Deployment Failed!"
-            sendSlackNotification("❌ *Deployment Failed!* 😢 Check Jenkins logs for details.", "danger")
         }
     }
-}
-
-def sendSlackNotification(String message, String color) {
-    slackSend(
-        channel: "team4",  
-        message: message,
-        color: color,
-        tokenCredentialId: "slack-token"  
-    )
 }
