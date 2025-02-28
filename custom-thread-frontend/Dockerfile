@@ -24,6 +24,12 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy the built React app from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Ensure the assets directory exists
+RUN mkdir -p /usr/share/nginx/html/assets
+
+# Copy assets from the build stage
+COPY --from=build /app/public/assets /usr/share/nginx/html/assets
+
 # Copy a custom Nginx configuration to set it to listen on port 3000
 COPY nginx.conf /etc/nginx/nginx.conf
 

@@ -20,11 +20,10 @@ export default defineConfig({
         outDir: "dist",
         sourcemap: process.env.NODE_ENV !== "production",
         minify: "esbuild",
+        assetsInlineLimit: 0, // Disable inlining assets
         rollupOptions: {
             output: {
-                manualChunks: {
-                    vendor: ["react", "react-dom", "react-router-dom"],
-                },
+                manualChunks: undefined,
             },
         },
     },
@@ -32,4 +31,5 @@ export default defineConfig({
         port: 3000,
         host: true,
     },
+    publicDir: "public", // Explicitly set the public directory
 });
