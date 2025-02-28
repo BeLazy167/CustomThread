@@ -63,6 +63,7 @@ export function Home() {
                                     size="lg"
                                     variant="outline"
                                     className="gap-2 text-lg"
+                                    onClick={() => navigate("/explore-designs")}
                                 >
                                     <Sparkles className="w-5 h-5" />
                                     Explore Designs

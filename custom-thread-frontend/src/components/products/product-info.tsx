@@ -1,56 +1,61 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Heart, MinusIcon, PlusIcon, Trash2 } from "lucide-react";
+import { Heart, MinusIcon, PlusIcon, Trash2, Loader2 } from "lucide-react";
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { MultiStepLoader as Loader } from "@/components/ui/multi-step-loader";
+import { useAddToCart } from "@/hooks/use-cart";
+import { toast } from "sonner";
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
-const loadingStates = [
-    { text: "Validating your payment" },
-    { text: "Processing your order" },
-    { text: "Confirming with the vendor" },
-    { text: "Packing your items" },
-    { text: "Preparing for shipment" },
-    { text: "Finalizing transaction" },
-    { text: "Payment Successful 🎉" },
-];
+interface ProductData {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+    image: string;
+    decal?: string;
+    isCustomDesign?: boolean;
+}
 
-export default function ProductInfo() {
+interface ProductInfoProps {
+    productData?: ProductData | null;
+}
+
+export default function ProductInfo({ productData }: ProductInfoProps) {
     const [selectedSize, setSelectedSize] = useState("M");
     const [isFavorited, setIsFavorited] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+    const addToCart = useAddToCart();
+
+    // Default product data if none is provided
+    const product = productData || {
+        id: "default",
+        name: "UltraComfort Tee",
+        price: 29.99,
+        description:
+            "Experience ultimate comfort with our UltraComfort Tee. Crafted from premium breathable cotton, this tee offers a soft feel, relaxed fit, and durability for everyday wear.",
+        image: "/placeholder.jpg",
+    };
 
     const [cartItems, setCartItems] = useState([
         {
-            id: 1,
-            name: "UltraComfort Tee",
-            price: 29.99,
-            image: "/placeholder.jpg",
-            size: "M",
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            size: selectedSize,
             quantity: 1,
-        },
-        {
-            id: 2,
-            name: "Premium Joggers",
-            price: 49.99,
-            image: "/placeholder.jpg",
-            size: "L",
-            quantity: 2,
         },
     ]);
 
-    const increaseQuantity = (id: number) => {
+    const increaseQuantity = (id: string) => {
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === id ? { ...item, quantity: item.quantity + 1 } : item
@@ -58,7 +63,7 @@ export default function ProductInfo() {
         );
     };
 
-    const decreaseQuantity = (id: number) => {
+    const decreaseQuantity = (id: string) => {
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === id
@@ -68,35 +73,50 @@ export default function ProductInfo() {
         );
     };
 
-    const removeItem = (id: number) => {
+    const removeItem = (id: string) => {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
     };
 
     const handleAddToCart = () => {
-        setIsCheckoutOpen(true);
-    };
+        try {
+            // Create cart item
+            const cartItem = {
+                productId: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image || "/placeholder.jpg",
+                size: selectedSize,
+                quantity: 1,
+                isCustomDesign: product.isCustomDesign || false,
+            };
 
-    const handleCheckout = () => {
-        setIsCheckoutOpen(false);
-        setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            navigate("/checkout");
-        }, loadingStates.length * 1000);
+            // Add to cart using React Query mutation
+            addToCart.mutate(cartItem);
+        } catch (error: unknown) {
+            console.error("Error in handleAddToCart:", error);
+            toast.error("Something went wrong");
+        }
     };
 
     return (
-        <div className="sticky top-8 space-y-6 max-w-md mx-auto">
+        <div className="space-y-4 sm:space-y-6 w-full max-w-md mx-auto md:sticky md:top-8">
             <div>
-                <h1 className="text-2xl font-semibold text-black dark:text-white">
-                    UltraComfort Tee
+                <h1 className="text-xl sm:text-2xl font-semibold text-black dark:text-white">
+                    {product.name}
                 </h1>
-                <p className="text-xl font-bold mt-1 text-black dark:text-white">
-                    $29.99
+                <p className="text-lg sm:text-xl font-bold mt-1 text-black dark:text-white">
+                    ${product.price.toFixed(2)}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Art. No. 0123456789
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Art. No. {product.id.padStart(10, "0")}
                 </p>
+                {product.isCustomDesign && (
+                    <div className="mt-2">
+                        <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                            Custom Design
+                        </span>
+                    </div>
+                )}
             </div>
 
             <div>
@@ -106,7 +126,7 @@ export default function ProductInfo() {
                 <RadioGroup
                     value={selectedSize}
                     onValueChange={setSelectedSize}
-                    className="flex gap-3 flex-wrap"
+                    className="flex gap-2 sm:gap-3 flex-wrap"
                 >
                     {sizes.map((size) => (
                         <div key={size}>
@@ -117,7 +137,7 @@ export default function ProductInfo() {
                             />
                             <Label
                                 htmlFor={`size-${size}`}
-                                className={`flex items-center justify-center w-16 h-16 border text-sm uppercase cursor-pointer transition-all
+                                className={`flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 border text-sm uppercase cursor-pointer transition-all
                   ${
                       selectedSize === size
                           ? "bg-black text-white"
@@ -131,13 +151,21 @@ export default function ProductInfo() {
                 </RadioGroup>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:gap-3 pt-2">
                 <Button
                     size="lg"
                     className="w-full bg-black text-white hover:bg-black"
                     onClick={handleAddToCart}
+                    disabled={addToCart.isPending}
                 >
-                    Add to bag
+                    {addToCart.isPending ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Adding to bag...
+                        </>
+                    ) : (
+                        "Add to bag"
+                    )}
                 </Button>
                 <Button
                     size="lg"
@@ -146,7 +174,7 @@ export default function ProductInfo() {
                     onClick={() => setIsFavorited(!isFavorited)}
                 >
                     <Heart
-                        className={`h-5 w-5 mr-2 ${
+                        className={`h-4 w-4 sm:h-5 sm:w-5 mr-2 ${
                             isFavorited
                                 ? "text-red-500 fill-red-500"
                                 : "text-black dark:text-white"
@@ -156,12 +184,9 @@ export default function ProductInfo() {
                 </Button>
             </div>
 
-            {/* ✅ Product Description Added Below "Save to Favorites" Button */}
-            <p className="mt-3 text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                Experience ultimate comfort with our UltraComfort Tee. Crafted
-                from premium breathable cotton, this tee offers a soft feel,
-                relaxed fit, and durability for everyday wear. Perfect for
-                casual outings, gym sessions, or just lounging in style.
+            {/* Product Description */}
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-xs sm:text-sm leading-relaxed">
+                {product.description}
             </p>
 
             <Sheet open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
@@ -182,6 +207,11 @@ export default function ProductInfo() {
                                     src={item.image}
                                     alt={item.name}
                                     className="h-24 w-20 rounded-lg object-cover border"
+                                    onError={(e) => {
+                                        e.currentTarget.src =
+                                            "/placeholder.jpg";
+                                        e.currentTarget.onerror = null;
+                                    }}
                                 />
                                 <div className="flex-1">
                                     <h3 className="font-medium">{item.name}</h3>
@@ -237,19 +267,13 @@ export default function ProductInfo() {
                         <Button
                             className="w-full mt-4"
                             size="lg"
-                            onClick={handleCheckout}
+                            onClick={() => setIsCheckoutOpen(true)}
                         >
                             Checkout
                         </Button>
                     </div>
                 </SheetContent>
             </Sheet>
-
-            <Loader
-                loadingStates={loadingStates}
-                loading={loading}
-                duration={1000}
-            />
         </div>
     );
 }

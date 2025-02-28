@@ -5,9 +5,12 @@ import {
     useUser,
 } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, ArrowLeft } from "lucide-react";
+import { MoonIcon, SunIcon, ArrowLeft, Menu, X } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { useLocation, useNavigate } from "react-router-dom";
+import { CartDropdown } from "./cart/cart-dropdown";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Extracted ThemeToggle component for better organization
 const ThemeToggle = () => {
@@ -21,20 +24,22 @@ const ThemeToggle = () => {
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
         >
-            <SunIcon className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-black" />
-            <MoonIcon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-white" />
+            <SunIcon className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-black dark:text-white" />
+            <MoonIcon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-black dark:text-white" />
         </Button>
     );
 };
 
 // Extracted AuthButtons component
 const AuthButtons = () => (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
         <SignInButton mode="modal">
-            <Button variant="ghost">Sign in</Button>
+            <Button variant="ghost" className="text-sm">
+                Sign in
+            </Button>
         </SignInButton>
         <SignUpButton mode="modal">
-            <Button>Sign up</Button>
+            <Button className="text-sm">Sign up</Button>
         </SignUpButton>
     </div>
 );
@@ -44,6 +49,7 @@ export default function Nav() {
     const location = useLocation();
     const navigate = useNavigate();
     const isDesignPage = location.pathname.includes("/design");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     if (isDesignPage) {
         return (
@@ -52,7 +58,7 @@ export default function Nav() {
                     variant="ghost"
                     size="icon"
                     onClick={() => navigate(-1)}
-                    className="bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800"
+                    className="bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800 shadow-sm"
                 >
                     <ArrowLeft className="h-6 w-6" />
                     <span className="sr-only">Go back</span>
@@ -62,8 +68,8 @@ export default function Nav() {
     }
 
     return (
-        <header className=" top-0 z-50 w-full border-b border-neutral-200/30 bg-transparent dark:border-neutral-800/30">
-            <div className="w-full mx-auto">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
+            <div className="container mx-auto px-4">
                 <nav className="flex h-16 items-center justify-between">
                     <a
                         href="/"
@@ -72,23 +78,62 @@ export default function Nav() {
                         CustomThreads
                     </a>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <ThemeToggle />
+                        <CartDropdown />
                         {isSignedIn ? (
                             <UserButton
                                 afterSignOutUrl="/"
                                 appearance={{
                                     elements: {
-                                        avatarBox: "w-10 h-10",
+                                        avatarBox: "w-8 h-8",
                                     },
                                 }}
                             />
                         ) : (
-                            <AuthButtons />
+                            <div className="hidden md:block">
+                                <AuthButtons />
+                            </div>
                         )}
+
+                        {/* Mobile menu button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="md:hidden"
+                            onClick={() =>
+                                setIsMobileMenuOpen(!isMobileMenuOpen)
+                            }
+                        >
+                            {isMobileMenuOpen ? (
+                                <X className="h-6 w-6" />
+                            ) : (
+                                <Menu className="h-6 w-6" />
+                            )}
+                        </Button>
                     </div>
                 </nav>
             </div>
+
+            {/* Mobile Navigation Menu */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="md:hidden border-t bg-background"
+                    >
+                        <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+                            {!isSignedIn && (
+                                <div className="flex flex-col gap-2">
+                                    <AuthButtons />
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </header>
     );
 }
