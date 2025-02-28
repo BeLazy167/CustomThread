@@ -7,11 +7,11 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
-            }
-        }
+        // stage('Clone Repository') {
+        //     steps {
+        //         git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
+        //     }
+        // }
 
         stage('Navigate to Frontend Directory') {
             steps {
