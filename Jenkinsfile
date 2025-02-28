@@ -64,11 +64,17 @@ pipeline {
     post {
         success {
             echo "Deployment Successful!"
-            slackSend channel: SLACK_CHANNEL, message: "✅ *Deployment Successful!* 🎉\nYour app is live", color: "good"
+            sendSlackNotification("✅ *Deployment Successful!* 🎉\nYour app is live", "good")
         }
         failure {
             echo "Deployment Failed!"
-            slackSend channel: SLACK_CHANNEL, message: "❌ *Deployment Failed!* 😢 Check Jenkins logs for details.", color: "danger"
+            sendSlackNotification("❌ *Deployment Failed!* 😢 Check Jenkins logs for details.", "danger")
         }
+    }
+}
+
+def sendSlackNotification(String message, String color) {
+    withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK_TOKEN')]) {
+        slackSend(channel: "#team4", message: message, color: color, token: SLACK_TOKEN)
     }
 }
