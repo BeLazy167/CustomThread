@@ -15,7 +15,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 dir("custom-thread-frontend") {
-                    sh 'npm install'
+                    sh 'npm ci'
                 }
             }
         }
@@ -29,7 +29,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 dir("custom-thread-frontend") {
-                    sh "docker build -t ${IMAGE_NAME} ."
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest"
                 }
             }
         }
@@ -38,7 +39,7 @@ pipeline {
                 script {
                     sh "docker stop ${CONTAINER_NAME} || true"
                     sh "docker rm ${CONTAINER_NAME} || true"
-                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
+                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} --restart unless-stopped --health-cmd='curl -f http://localhost:3000 || exit 1' --health-interval=30s ${IMAGE_NAME}:latest"
                 }
             }
         }
@@ -48,7 +49,7 @@ pipeline {
             echo "Deployment Successful!"
             slackSend channel: 'team4', 
                       color: 'good', 
-                      message: "✅ Build Successful!"
+                      message: "✅ Build Successful! Image: ${IMAGE_NAME}:${IMAGE_TAG}"
         }
         failure {
             echo "Deployment Failed!"
