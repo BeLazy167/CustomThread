@@ -13,13 +13,6 @@ pipeline {
                 }
             }
         }
-        stage('Install Dependencies') {
-            steps {
-                dir("custom-thread-frontend") {
-                    sh 'npm ci'
-                }
-            }
-        }
         stage('Build Docker Image') {
             steps {
                 dir("custom-thread-frontend") {
