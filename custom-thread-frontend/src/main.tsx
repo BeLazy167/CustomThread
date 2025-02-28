@@ -13,7 +13,8 @@ const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 // Add polyfill for crypto.randomUUID
 if (!crypto.randomUUID) {
-    crypto.randomUUID = function () {
+    // Use type assertion to match the expected UUID template type
+    (crypto as any).randomUUID = function (): string {
         return "10000000-1000-4000-8000-100000000000".replace(
             /[018]/g,
             (c: string) => {
