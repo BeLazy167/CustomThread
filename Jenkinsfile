@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         IMAGE_NAME = "custom-thread-frontend"
+        IMAGE_TAG = "${BUILD_NUMBER}"
         CONTAINER_NAME = "frontend-container"
     }
     stages {
