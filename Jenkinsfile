@@ -6,12 +6,6 @@ pipeline {
         CONTAINER_NAME = "frontend-container"
     }
     stages {
-        stage('Clone Repository') {
-            steps {
-                echo 'Cloning the repository...'
-                sh 'git clone -b main https://github.com/BeLazy167/CustomThread.git custom-thread-frontend'
-            }
-        }
         stage('Navigate to Frontend Directory') {
             steps {
                 dir("custom-thread-frontend") {
