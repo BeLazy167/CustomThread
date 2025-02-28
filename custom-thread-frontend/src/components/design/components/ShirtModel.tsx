@@ -6,6 +6,13 @@ import { useSnapshot } from "valtio";
 import { state } from "../store";
 import { Mesh } from "three";
 
+// Preload all clothing models with explicit paths
+useGLTF.preload("./assets/shirt_baked_collapsed.glb");
+useGLTF.preload("./assets/shirt_baked_2.glb");
+
+// Preload default texture
+useTexture.preload("./assets/a.png");
+
 export function ShirtModel(props: MeshProps) {
     const snap = useSnapshot(state);
 
@@ -61,11 +68,3 @@ export function ShirtModel(props: MeshProps) {
         </mesh>
     );
 }
-
-// Preload all clothing models
-Object.values(state.clothingModels).forEach((path) => {
-    useGLTF.preload(path);
-});
-
-// Preload default texture
-useTexture.preload("./assets/a.png");
