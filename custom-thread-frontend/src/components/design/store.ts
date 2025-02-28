@@ -19,12 +19,12 @@ export const state = proxy<State>({
     color: new THREE.Color("#EFBD48"),
     decal: "a", // or whatever your default decal is
     isLogoTexture: true,
-    logoDecal: "./assets/a.png",
+    logoDecal: "/assets/a.png",
     fullDecal: null,
     clothingType: "t-shirt",
     clothingModels: {
-        "t-shirt": "/src/assets/shirt_baked_collapsed.glb",
-        hoodie: "/src/assets/shirt_baked_2.glb",
+        "t-shirt": "/assets/shirt_baked_collapsed.glb",
+        hoodie: "/assets/shirt_baked_2.glb",
     },
 });
 

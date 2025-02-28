@@ -6,19 +6,19 @@ import { useSnapshot } from "valtio";
 import { state } from "../store";
 import { Mesh } from "three";
 
-// Preload all clothing models with explicit paths
-useGLTF.preload("./assets/shirt_baked_collapsed.glb");
-useGLTF.preload("./assets/shirt_baked_2.glb");
+// Preload all clothing models with absolute paths
+useGLTF.preload("/assets/shirt_baked_collapsed.glb");
+useGLTF.preload("/assets/shirt_baked_2.glb");
 
 // Preload default texture
-useTexture.preload("./assets/a.png");
+useTexture.preload("/assets/a.png");
 
 export function ShirtModel(props: MeshProps) {
     const snap = useSnapshot(state);
 
-    // Load textures first
-    const logo = useTexture(snap.logoDecal || "./assets/a.png");
-    const full = useTexture(snap.fullDecal || "./assets/a.png");
+    // Load textures first with absolute paths
+    const logo = useTexture(snap.logoDecal || "/assets/a.png");
+    const full = useTexture(snap.fullDecal || "/assets/a.png");
 
     // Then memoize the loaded textures
     const logoTexture = useMemo(() => logo, [logo]);
@@ -28,6 +28,7 @@ export function ShirtModel(props: MeshProps) {
     const activeTexture = snap.isLogoTexture ? logoTexture : fullTexture;
 
     // Load the current clothing model
+    // Make sure paths in state.clothingModels also use absolute paths
     const { nodes, materials } = useGLTF(
         snap.clothingModels[snap.clothingType]
     );
