@@ -4,7 +4,6 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        BASE_DIR = 'customthreads'  
         SLACK_CHANNEL = "#team4"
     }
 
@@ -12,15 +11,13 @@ pipeline {
 
         stage('Clone Repository') {
             steps {
-                dir("$BASE_DIR") {
-                    git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
-                }
+                git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
             }
         }
 
         stage('Navigate to Frontend Directory') {
             steps {
-                dir("$BASE_DIR/custom-thread-frontend") {
+                dir("custom-thread-frontend") {  
                     echo 'Inside frontend directory'
                 }
             }
@@ -28,7 +25,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                dir("$BASE_DIR/custom-thread-frontend") {
+                dir("custom-thread-frontend") {  
                     sh 'npm install'
                 }
             }
@@ -36,7 +33,7 @@ pipeline {
 
         stage('Build React App') {
             steps {
-                dir("$BASE_DIR/custom-thread-frontend") {
+                dir("custom-thread-frontend") {
                     sh 'npm run build'
                 }
             }
@@ -44,8 +41,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir("$BASE_DIR/custom-thread-frontend") {
-                    sh 'docker build -t $IMAGE_NAME .'
+                dir("custom-thread-frontend") {
+                    sh "docker build -t ${IMAGE_NAME} ."   
                 }
             }
         }
@@ -53,9 +50,9 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 script {
-                    sh 'docker stop $CONTAINER_NAME || true'
-                    sh 'docker rm $CONTAINER_NAME || true'
-                    sh 'docker run -d -p 3000:3000 --name $CONTAINER_NAME $IMAGE_NAME'
+                    sh "docker stop ${CONTAINER_NAME} || true"
+                    sh "docker rm ${CONTAINER_NAME} || true"
+                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
                 }
             }
         }
