@@ -72,6 +72,6 @@ pipeline {
 
 def sendSlackNotification(String message, String color) {
     withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK_TOKEN')]) {
-        slackSend(channel: "#team4", message: message, color: color, token: SLACK_TOKEN)
+        slackSend(channel: "team4", message: message, color: color, token: SLACK_TOKEN)
     }
 }
