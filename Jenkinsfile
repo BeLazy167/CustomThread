@@ -1,11 +1,9 @@
 pipeline {
     agent any
-
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
     }
-
     stages {
         stage('Navigate to Frontend Directory') {
             steps {
@@ -14,7 +12,6 @@ pipeline {
                 }
             }
         }
-
         stage('Install Dependencies') {
             steps {
                 dir("custom-thread-frontend") {
@@ -22,7 +19,6 @@ pipeline {
                 }
             }
         }
-
         stage('Build React App') {
             steps {
                 dir("custom-thread-frontend") {
@@ -30,7 +26,6 @@ pipeline {
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 dir("custom-thread-frontend") {
@@ -38,7 +33,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy Container') {
             steps {
                 script {
@@ -49,13 +43,23 @@ pipeline {
             }
         }
     }
-
     post {
         success {
             echo "Deployment Successful!"
+            slackSend channel: 'team4', 
+                      color: 'good', 
+                      message: "✅ Build Successful!"
         }
         failure {
             echo "Deployment Failed!"
+            slackSend channel: 'team4', 
+                      color: 'danger', 
+                      message: "❌ Build Failed!"
+        }
+        unstable {
+            slackSend channel: 'team4',
+                      color: 'warning',
+                      message: "⚠️ Build Unstable!"
         }
     }
 }
