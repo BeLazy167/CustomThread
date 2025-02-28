@@ -11,7 +11,6 @@ RUN npm install
 # Copy all files and build the app
 COPY . ./ 
 RUN npm run build
-RUN npm run preview
 
 # Use Nginx to serve the React app on port 3000
 FROM nginx:alpine
