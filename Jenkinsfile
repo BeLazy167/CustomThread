@@ -4,11 +4,10 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        SLACK_CHANNEL = "team4"
+        SLACK_CHANNEL = "team4"  
     }
 
     stages {
-
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
@@ -17,7 +16,7 @@ pipeline {
 
         stage('Navigate to Frontend Directory') {
             steps {
-                dir("custom-thread-frontend") {  
+                dir("custom-thread-frontend") {
                     echo 'Inside frontend directory'
                 }
             }
@@ -25,7 +24,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                dir("custom-thread-frontend") {  
+                dir("custom-thread-frontend") {
                     sh 'npm install'
                 }
             }
@@ -42,7 +41,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 dir("custom-thread-frontend") {
-                    sh "docker build -t ${IMAGE_NAME} ."   
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
@@ -71,7 +70,10 @@ pipeline {
 }
 
 def sendSlackNotification(String message, String color) {
-    withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK_TOKEN')]) {
-        slackSend(channel: "team4", message: message, color: color, token: SLACK_TOKEN)
-    }
+    slackSend(
+        channel: "team4",  
+        message: message,
+        color: color,
+        tokenCredentialId: "slack-token"  
+    )
 }
