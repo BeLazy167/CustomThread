@@ -20,13 +20,6 @@ pipeline {
                 }
             }
         }
-        stage('Build React App') {
-            steps {
-                dir("custom-thread-frontend") {
-                    sh 'npm run build'
-                }
-            }
-        }
         stage('Build Docker Image') {
             steps {
                 dir("custom-thread-frontend") {
