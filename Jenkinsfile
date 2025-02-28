@@ -63,8 +63,8 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful! Access your app at http://52.207.212.245"
-            slackSend channel: SLACK_CHANNEL, message: "✅ *Deployment Successful!* 🎉\nYour app is live at: http://52.207.212.245", color: "good"
+            echo "Deployment Successful!"
+            slackSend channel: SLACK_CHANNEL, message: "✅ *Deployment Successful!* 🎉\nYour app is live", color: "good"
         }
         failure {
             echo "Deployment Failed!"
