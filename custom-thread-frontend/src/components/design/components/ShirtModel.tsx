@@ -10,8 +10,8 @@ export function ShirtModel(props: MeshProps) {
     const snap = useSnapshot(state);
 
     // Load textures first
-    const logo = useTexture(snap.logoDecal || "/src/assets/a.png");
-    const full = useTexture(snap.fullDecal || "/src/assets/a.png");
+    const logo = useTexture(snap.logoDecal || "./assets/a.png");
+    const full = useTexture(snap.fullDecal || "./assets/a.png");
 
     // Then memoize the loaded textures
     const logoTexture = useMemo(() => logo, [logo]);
@@ -68,4 +68,4 @@ Object.values(state.clothingModels).forEach((path) => {
 });
 
 // Preload default texture
-useTexture.preload("/src/assets/a.png");
+useTexture.preload("./assets/a.png");
