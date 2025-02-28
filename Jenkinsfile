@@ -4,19 +4,15 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        BASE_DIR = 'customthreads'  // Use relative path for Jenkins workspace
+        BASE_DIR = 'customthreads'  
+        SLACK_CHANNEL = "#team4"
     }
 
     stages {
-        stage('Create Directory') {
-            steps {
-                sh 'mkdir -p $BASE_DIR'  // Create the customthreads directory in Jenkins workspace
-            }
-        }
 
         stage('Clone Repository') {
             steps {
-                dir("$BASE_DIR") {  // Clone into the customthreads directory inside the workspace
+                dir("$BASE_DIR") {
                     git branch: 'main', url: 'https://github.com/BeLazy167/CustomThread.git'
                 }
             }
@@ -57,11 +53,8 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 script {
-                    // Stop and remove old container if it exists
                     sh 'docker stop $CONTAINER_NAME || true'
                     sh 'docker rm $CONTAINER_NAME || true'
-
-                    // Run new container
                     sh 'docker run -d -p 3000:3000 --name $CONTAINER_NAME $IMAGE_NAME'
                 }
             }
@@ -71,9 +64,11 @@ pipeline {
     post {
         success {
             echo "Deployment Successful! Access your app at http://52.207.212.245"
+            slackSend channel: SLACK_CHANNEL, message: "✅ *Deployment Successful!* 🎉\nYour app is live at: http://52.207.212.245", color: "good"
         }
         failure {
             echo "Deployment Failed!"
+            slackSend channel: SLACK_CHANNEL, message: "❌ *Deployment Failed!* 😢 Check Jenkins logs for details.", color: "danger"
         }
     }
 }
