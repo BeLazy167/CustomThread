@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "custom-thread-frontend"
         CONTAINER_NAME = "frontend-container"
-        SLACK_CHANNEL = "#team4"
+        SLACK_CHANNEL = "team4"
     }
 
     stages {
