@@ -1,31 +1,42 @@
-import { useState } from "react"
-import { CreditCard, MapPin, Clock, Home } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import Confetti from "@/components/receipt /Confetti"
-import TypingEffect from "@/components/receipt /Typingeffect"
-
+import { useState } from "react";
+import { CreditCard, MapPin, Clock, Home } from "lucide-react";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import Confetti from "@/components/receipt/Confetti";
+import TypingEffect from "@/components/receipt/Typingeffect";
 
 export default function Receipt() {
-    const [showConfetti, setShowConfetti] = useState(false)
-    const [confettiKey, setConfettiKey] = useState(0) // Unique key for Confetti
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [confettiKey, setConfettiKey] = useState(0); // Unique key for Confetti
 
     const handleBackToHome = () => {
-        setShowConfetti(false) // Hide confetti
+        setShowConfetti(false); // Hide confetti
         setTimeout(() => {
-            setShowConfetti(true)
-            setConfettiKey(prevKey => prevKey + 1) // Force remount by changing key
-        }, 100) // Small delay to reset state
-        console.log("Navigating to homepage...")
-    }
+            setShowConfetti(true);
+            setConfettiKey((prevKey) => prevKey + 1); // Force remount by changing key
+        }, 100); // Small delay to reset state
+        console.log("Navigating to homepage...");
+    };
 
     return (
         <div className="w-full flex items-center justify-center bg-transparent p-4">
             <Card className="max-w-screen-xl shadow-lg border border-gray-300">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold font-mono text-center">RECEIPT</CardTitle>
-                    <CardDescription className="text-sm text-center" id="order-id">
+                    <CardTitle className="text-3xl font-bold font-mono text-center">
+                        RECEIPT
+                    </CardTitle>
+                    <CardDescription
+                        className="text-sm text-center"
+                        id="order-id"
+                    >
                         <TypingEffect text="Order ID: #12345" />
                     </CardDescription>
                 </CardHeader>
@@ -77,5 +88,5 @@ export default function Receipt() {
             </Card>
             {showConfetti && <Confetti key={confettiKey} />}
         </div>
-    )
+    );
 }

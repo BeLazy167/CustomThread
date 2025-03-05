@@ -11,7 +11,7 @@ import ProfilePage from "./components/profile/ProfilePage";
 import ProductsPage from "./components/product_list/Products";
 import CheckoutPage from "./components/checkout/CheckoutPage";
 // import Sidebar from "./components/sidebar/Sidebar";\
-import Receipt from "./components/receipt /Receipt";
+import Receipt from "./components/receipt/Receipt";
 // import ExploreDesigns from "./pages/ExploreDesigns";
 import { QueryProvider } from "./providers/query-provider";
 
