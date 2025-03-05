@@ -84,7 +84,7 @@ const ProductsPage: React.FC = () => {
                                             "Untitled Design"}
                                     </h3>
                                     <p className="text-sm text-muted-foreground mb-2">
-                                        by {design.userId || "Unknown Artist"}
+                                        by {design.userName || "Unknown Artist"}
                                     </p>
                                     <p className="text-lg font-bold">
                                         $
