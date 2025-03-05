@@ -15,6 +15,7 @@ export class DesignController {
             const designData: DesignCreateInput = {
                 ...req.body,
                 userId: req.auth.userId || req.body.userId,
+                username: req.auth.username || req.body.username,
             };
             const design = await this.designService.create(designData);
             res.status(201).json(design);
@@ -46,6 +47,7 @@ export class DesignController {
         try {
             const options: DesignQueryOptions = {
                 userId: req.query.userId as string,
+                userName: req.query.userName as string,
                 tags: req.query.tags ? (req.query.tags as string).split(',') : undefined,
                 page: req.query.page ? parseInt(req.query.page as string) : undefined,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,

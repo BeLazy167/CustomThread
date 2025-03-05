@@ -10,6 +10,10 @@ const designSchema = new Schema(
             required: true,
             index: true,
         },
+        userName:{
+            type:String,
+            required:true,
+        },
         designDetail: {
             title: {
                 type: String,
