@@ -27,7 +27,81 @@ interface CartItemData {
     isCustomDesign: boolean;
 }
 
+interface CheckoutItem {
+    designId: string;
+    quantity: number;
+    size: string;
+    customizations?: {
+        color?: string;
+        text?: string;
+        placement?: string;
+    };
+}
+
+interface ShippingDetails {
+    name: string;
+    email: string;
+    address: string;
+    city: string;
+    contact: string;
+    country: string;
+    postalCode: string;
+}
+
+interface CheckoutSessionRequest {
+    items: CheckoutItem[];
+    shippingDetails: ShippingDetails;
+}
+
+interface Order {
+    id: string;
+    userId: string;
+    items: {
+        designId: string;
+        design: {
+            title: string;
+            image: string;
+            price: number;
+        };
+        quantity: number;
+        size: string;
+        customizations?: {
+            color?: string;
+            text?: string;
+            placement?: string;
+        };
+    }[];
+    shippingDetails: ShippingDetails;
+    status:
+        | "pending"
+        | "confirmed"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled";
+    totalAmount: number;
+    paymentStatus: "pending" | "paid" | "failed";
+    createdAt: string;
+    updatedAt: string;
+}
+
 const API_URL = "http://localhost:3001/api/v1";
+
+// Get the Clerk token
+const getClerkToken = async (): Promise<string | null> => {
+    try {
+        // For development/testing, you can use this to bypass authentication
+        // This should be removed in production
+        return "development_token";
+
+        // In production, uncomment this to use the actual Clerk token
+        // const token = await window.Clerk?.session?.getToken();
+        // return token || null;
+    } catch (error) {
+        console.error("Error getting Clerk token:", error);
+        return null;
+    }
+};
 
 const api = {
     get: async (endpoint: string, params: QueryParams = {}) => {
@@ -35,11 +109,19 @@ const api = {
         Object.keys(params).forEach((key) =>
             url.searchParams.append(key, String(params[key]))
         );
+
+        const token = await getClerkToken();
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(url.toString(), {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             credentials: "omit", // Adjust as needed: 'include', 'same-origin'
         });
         if (!response.ok) {
@@ -49,11 +131,18 @@ const api = {
     },
 
     post: async <T>(endpoint: string, data: T) => {
+        const token = await getClerkToken();
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify(data),
             credentials: "omit",
         });
@@ -64,11 +153,18 @@ const api = {
     },
 
     patch: async <T>(endpoint: string, data: T) => {
+        const token = await getClerkToken();
+        const headers: HeadersInit = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify(data),
             credentials: "omit",
         });
@@ -79,8 +175,16 @@ const api = {
     },
 
     delete: async (endpoint: string) => {
+        const token = await getClerkToken();
+        const headers: HeadersInit = {};
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: "DELETE",
+            headers,
             credentials: "omit",
         });
         if (!response.ok) {
@@ -113,6 +217,16 @@ export const cartApi = {
     removeFromCart: async (itemId: string) =>
         api.delete(`/cart/items/${itemId}`),
     clearCart: async () => api.delete("/cart"),
+};
+
+// Order API
+export const orderApi = {
+    getOrders: async () => api.get("/orders"),
+    getOrderById: async (orderId: string) => api.get(`/orders/${orderId}`),
+    createCheckoutSession: async (checkoutData: CheckoutSessionRequest) =>
+        api.post("/orders/checkout", checkoutData),
+    updateOrderStatus: async (orderId: string, status: Order["status"]) =>
+        api.patch(`/orders/${orderId}/status`, { status }),
 };
 
 export default api;

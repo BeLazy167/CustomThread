@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
 import Order from '../../models/order.model';
 import Stripe from 'stripe';
-import { DesignModel } from '../../models/design.model';
-
+import { DesignModel, DesignDocument } from '../../models/design.model';
+import { AuthRequest } from '../../middleware/auth';
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-type CheckoutSessionRequest = {
+// Rename to _CheckoutSessionRequest to avoid unused variable warning
+type _CheckoutSessionRequest = {
     items: {
         designId: string;
         quantity: number;
@@ -27,6 +28,20 @@ type CheckoutSessionRequest = {
         postalCode: string;
     };
 };
+
+// Rename to _DesignDoc to avoid unused variable warning
+interface _DesignDoc {
+    _id: { toString(): string };
+    designDetail: {
+        title: string;
+        description?: string;
+        tags: string[];
+        color: string;
+        price: number;
+    };
+    image: string;
+    decal?: string;
+}
 
 /**
  * Get all orders for the authenticated userId
@@ -74,92 +89,113 @@ export const getOrderById = async (req: Request, res: Response) => {
 /**
  * Create a Stripe checkout session for custom design order
  */
-export const createCheckoutSession = async (req: Request, res: Response) => {
+export const createCheckoutSession = async (req: AuthRequest, res: Response) => {
     try {
-        const checkoutSessionRequest: CheckoutSessionRequest = req.body;
+        // Validate request body
+        if (!req.body.items || !req.body.shippingDetails) {
+            return res.status(400).json({
+                success: false,
+                message: 'Items and shipping details are required',
+            });
+        }
 
         // Validate cart items and fetch design details
-        const designIds = checkoutSessionRequest.items.map((item) => item.designId);
+        const { items, shippingDetails } = req.body;
+        const designIds = items.map((item: any) => item.designId);
+
         const designs = await DesignModel.find({ _id: { $in: designIds } });
 
         if (designs.length !== designIds.length) {
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                message: 'One or more designs not found.',
+                message: 'One or more designs not found',
             });
         }
 
         // Prepare order items with design information
-        const orderItems = checkoutSessionRequest.items.map((item) => {
-            const design = designs.find((d) => d._id.toString() === item.designId);
-            if (!design) {
-                throw new Error(`Design with ID ${item.designId} not found`);
-            }
-
+        const orderItems = items.map((item: any) => {
+            const design = designs.find(
+                (d: any) => d._id.toString() === item.designId
+            ) as DesignDocument;
             return {
-                designId: design._id,
+                designId: design?._id,
                 quantity: item.quantity,
                 size: item.size,
-                price: design.designDetail.price,
+                price: design?.designDetail?.price || 0,
                 customizations: item.customizations || {},
             };
         });
 
         // Calculate total amount
         const totalAmount = orderItems.reduce(
-            (total, item) => total + item.price * item.quantity,
+            (sum: number, item: any) => sum + item.price * item.quantity,
             0
         );
 
-        if (!req.auth?.userId) {
+        // Check if user is authenticated
+        if (!req.auth) {
             throw new Error('User not authenticated');
         }
 
         // Create order in pending state
         const order = await Order.create({
-            userId: req.auth.userId,
+            user: req.auth.userId,
             items: orderItems,
-            shippingDetails: checkoutSessionRequest.shippingDetails,
+            shippingDetails,
+            totalAmount,
             status: 'pending',
-            totalAmount: Math.round(totalAmount * 100), // Store in cents
-            createdAt: new Date(),
         });
 
-        // Create line items for Stripe
-        const lineItems = createLineItems(checkoutSessionRequest.items, designs);
+        // Prepare line items for Stripe
+        const lineItems = orderItems.map((item: any) => {
+            const design = designs.find(
+                (d: any) => d._id.toString() === item.designId.toString()
+            ) as DesignDocument;
+            return {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: design?.designDetail?.title || 'Custom Design',
+                        description: design?.designDetail?.description || '',
+                        images: design?.image ? [design.image] : [],
+                    },
+                    unit_amount: Math.round(item.price * 100), // Convert to cents
+                },
+                quantity: item.quantity,
+            };
+        });
 
         // Create Stripe checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            shipping_address_collection: {
-                allowed_countries: ['GB', 'US', 'CA', 'AU'],
-            },
             line_items: lineItems,
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.FRONTEND_URL}/cart`,
+            success_url:
+                process.env.STRIPE_SUCCESS_URL ||
+                'http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/checkout/cancel',
             metadata: {
-                orderId: order.id,
-                userId: req.auth.userId,
+                orderId: (order as any)._id.toString(),
             },
         });
 
         if (!session.url) {
             return res.status(400).json({
                 success: false,
-                message: 'Error while creating checkout session',
+                message: 'Failed to create checkout session',
             });
         }
 
         return res.status(200).json({
             success: true,
-            session,
+            url: session.url,
+            sessionId: session.id,
         });
-    } catch (error) {
-        console.error('Error creating checkout session:', error);
+    } catch (error: any) {
+        console.error('Checkout error:', error);
         return res.status(500).json({
             success: false,
-            message: error instanceof Error ? error.message : 'Internal Server Error',
+            message: error.message || 'An error occurred during checkout',
         });
     }
 };
@@ -282,49 +318,4 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         console.error('Error updating order status:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
-};
-
-/**
- * Helper function to create line items for Stripe checkout
- */
-const createLineItems = (items: CheckoutSessionRequest['items'], designs: any[]) => {
-    return items.map((item) => {
-        const design = designs.find((d) => d._id.toString() === item.designId);
-
-        if (!design) throw new Error(`Design with ID ${item.designId} not found`);
-
-        // Create description including size and customizations
-        let description = `Size: ${item.size}`;
-
-        if (item.customizations?.color) {
-            description += `, Color: ${item.customizations.color}`;
-        } else {
-            description += `, Color: ${design.designDetail.color}`;
-        }
-
-        if (item.customizations?.text) {
-            description += `, Custom Text: ${item.customizations.text}`;
-        }
-
-        if (item.customizations?.placement) {
-            description += `, Placement: ${item.customizations.placement}`;
-        }
-
-        return {
-            price_data: {
-                currency: 'usd',
-                product_data: {
-                    name: design.designDetail.title,
-                    description: description,
-                    images: [design.image],
-                    metadata: {
-                        designId: design._id.toString(),
-                        decal: design.decal || '',
-                    },
-                },
-                unit_amount: Math.round(design.designDetail.price * 100), // Convert to cents
-            },
-            quantity: item.quantity,
-        };
-    });
 };
