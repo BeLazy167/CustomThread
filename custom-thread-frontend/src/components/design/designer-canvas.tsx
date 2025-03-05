@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { useStore } from "@/store";
 import { useSubmitDesign } from "@/mutations/use-submit-design";
+import { useUser } from "@clerk/clerk-react";
 
 // Import our new components
 import { Backdrop } from "./components/Backdrop";
@@ -30,6 +31,7 @@ const DesignerCanvas: React.FC<AppProps> = ({
     fov = 25,
 }) => {
     const { toast } = useToast();
+    const { user } = useUser();
 
     const mouseX = useMotionValue(Infinity);
     const [detailsOpen, setDetailsOpen] = useState(false);
@@ -107,33 +109,36 @@ const DesignerCanvas: React.FC<AppProps> = ({
         }
 
         try {
-            // Capture the canvas as a base64 image
             const canvas = document.querySelector("canvas");
             if (!canvas) throw new Error("Canvas not found");
 
             const imageData = canvas.toDataURL("image/png");
 
-            await submitDesignMutation.mutateAsync(imageData, {
-                onSuccess: () => {
-                    toast({
-                        title: "Success",
-                        description:
-                            "Your design has been submitted successfully!",
-                    });
-                    // Optional: Navigate to a success page or designs list
-                    // navigate("/designs");
+            await submitDesignMutation.mutateAsync(
+                {
+                    imageData,
+                    username: user?.fullName || "Anonymous User",
                 },
-                onError: (error) => {
-                    toast({
-                        title: "Error",
-                        description:
-                            error instanceof Error
-                                ? error.message
-                                : "Failed to submit design",
-                        variant: "destructive",
-                    });
-                },
-            });
+                {
+                    onSuccess: () => {
+                        toast({
+                            title: "Success",
+                            description:
+                                "Your design has been submitted successfully!",
+                        });
+                    },
+                    onError: (error) => {
+                        toast({
+                            title: "Error",
+                            description:
+                                error instanceof Error
+                                    ? error.message
+                                    : "Failed to submit design",
+                            variant: "destructive",
+                        });
+                    },
+                }
+            );
         } catch (error) {
             console.error("Failed to submit design:", error);
             toast({
