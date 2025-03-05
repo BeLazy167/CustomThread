@@ -3,17 +3,19 @@ import { SignIn, SignUp } from "@clerk/clerk-react";
 import Nav from "./components/nav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { Home } from "./components/home";
 import Design from "./pages/Design";
 import Product from "./pages/Product";
 import ProfilePage from "./components/profile/ProfilePage";
 import ProductsPage from "./components/product_list/Products";
-import CheckoutPage from "./components/checkout/CheckoutPage";
-// import Sidebar from "./components/sidebar/Sidebar";\
+import LivePackageJourney from "./components/checkout/CheckoutPage";
 import Receipt from "./components/receipt/Receipt";
 // import ExploreDesigns from "./pages/ExploreDesigns";
 import { QueryProvider } from "./providers/query-provider";
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 
 function App() {
     return (
@@ -23,7 +25,7 @@ function App() {
                 <BrowserRouter>
                     <div className="min-h-screen bg-background flex flex-col">
                         <Nav />
-                        <Toaster position="top-center" richColors />
+                        <Toaster />
                         <main className="flex-1">
                             <Routes>
                                 <Route path="/" element={<Home />} />
@@ -50,6 +52,10 @@ function App() {
                                         path="/design"
                                         element={<Design />}
                                     />
+                                    <Route
+                                        path="/checkout"
+                                        element={<Checkout />}
+                                    />
                                 </Route>
                                 <Route
                                     path="/profile"
@@ -64,8 +70,16 @@ function App() {
                                     element={<Product />}
                                 />
                                 <Route
-                                    path="/checkout"
-                                    element={<CheckoutPage />}
+                                    path="/order-tracking"
+                                    element={<LivePackageJourney />}
+                                />
+                                <Route
+                                    path="/checkout/success"
+                                    element={<CheckoutSuccess />}
+                                />
+                                <Route
+                                    path="/checkout/cancel"
+                                    element={<CheckoutCancel />}
                                 />
                                 <Route
                                     path="/explore-designs"

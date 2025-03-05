@@ -14,8 +14,8 @@ export class DesignController {
         try {
             const designData: DesignCreateInput = {
                 ...req.body,
-                userId: req.auth.userId || req.body.userId,
-                username: req.auth.username || req.body.username,
+                userId: req.auth?.userId || req.body.userId,
+                username: req.body.username, // Use username from request body only
             };
             const design = await this.designService.create(designData);
             res.status(201).json(design);

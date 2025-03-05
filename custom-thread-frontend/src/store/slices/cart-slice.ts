@@ -1,4 +1,5 @@
 import { StateCreator } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface CartItem {
     id: string;
@@ -26,9 +27,34 @@ export interface CartSlice {
     setError: (error: string | null) => void;
 }
 
+// Load initial state from localStorage if available
+const loadInitialState = (): { items: CartItem[]; total: number } => {
+    try {
+        const savedCart = localStorage.getItem("cart");
+        if (savedCart) {
+            const { items, total } = JSON.parse(savedCart);
+            return { items, total };
+        }
+    } catch (error) {
+        console.error("Error loading cart from localStorage:", error);
+    }
+    return { items: [], total: 0 };
+};
+
+// Save cart state to localStorage
+const saveCartState = (items: CartItem[], total: number) => {
+    try {
+        localStorage.setItem("cart", JSON.stringify({ items, total }));
+    } catch (error) {
+        console.error("Error saving cart to localStorage:", error);
+    }
+};
+
+const initialState = loadInitialState();
+
 export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
-    items: [],
-    total: 0,
+    items: initialState.items,
+    total: initialState.total,
     isLoading: false,
     error: null,
 
@@ -49,6 +75,9 @@ export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
                 0
             );
 
+            // Save to localStorage
+            saveCartState(updatedItems, newTotal);
+
             set({
                 items: updatedItems,
                 total: newTotal,
@@ -66,6 +95,9 @@ export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
                 (sum, item) => sum + item.price * item.quantity,
                 0
             );
+
+            // Save to localStorage
+            saveCartState(newItems, newTotal);
 
             set({
                 items: newItems,
@@ -86,6 +118,9 @@ export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
             0
         );
 
+        // Save to localStorage
+        saveCartState(updatedItems, newTotal);
+
         set({
             items: updatedItems,
             total: newTotal,
@@ -102,6 +137,9 @@ export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
             0
         );
 
+        // Save to localStorage
+        saveCartState(updatedItems, newTotal);
+
         set({
             items: updatedItems,
             total: newTotal,
@@ -109,6 +147,9 @@ export const createCartSlice: StateCreator<CartSlice> = (set, get) => ({
     },
 
     clearCart: () => {
+        // Clear localStorage
+        localStorage.removeItem("cart");
+
         set({
             items: [],
             total: 0,

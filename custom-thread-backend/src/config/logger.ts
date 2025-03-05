@@ -35,13 +35,17 @@ const format = winston.format.combine(
     winston.format.printf(
         (info) =>
             `${info.timestamp} ${info.level}: ${info.message}${
-                Object.keys(info.metadata).length ? ` ${JSON.stringify(info.metadata)}` : ''
+                info.metadata && typeof info.metadata === 'object'
+                    ? Object.keys(info.metadata as object).length
+                        ? ` ${JSON.stringify(info.metadata)}`
+                        : ''
+                    : ''
             }`
     )
 );
 
 // Define which transports we want to use for our logger
-const transports = [
+const transports: winston.transport[] = [
     // Write all logs with level 'error' and below to error.log
     new DailyRotateFile({
         filename: 'logs/error-%DATE%.log',
@@ -66,7 +70,7 @@ if (appConfig.env !== 'production') {
     transports.push(
         new winston.transports.Console({
             format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-        })
+        }) as unknown as winston.transport
     );
 }
 

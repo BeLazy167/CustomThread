@@ -1,9 +1,5 @@
-import { DesignModel, DesignDocument } from "../models/design.model";
-import {
-    DesignCreateInput,
-    DesignUpdateInput,
-    DesignQueryOptions,
-} from "../types/design.types";
+import { DesignModel, DesignDocument } from '../models/design.model';
+import { DesignCreateInput, DesignUpdateInput, DesignQueryOptions } from '../types/design.types';
 
 export class DesignService {
     async create(data: DesignCreateInput): Promise<DesignDocument> {
@@ -26,18 +22,18 @@ export class DesignService {
             tags,
             page = 1,
             limit = 10,
-            sortBy = "createdAt",
-            sortOrder = "desc",
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
         } = options;
 
         const query: any = {};
         if (userId) query.userId = userId;
-        if (tags?.length) query["designDetail.tags"] = { $in: tags };
+        if (tags?.length) query['designDetail.tags'] = { $in: tags };
 
         const skip = (page - 1) * limit;
         const [designs, total] = await Promise.all([
             DesignModel.find(query)
-                .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
+                .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
                 .skip(skip)
                 .limit(limit),
             DesignModel.countDocuments(query),
@@ -51,10 +47,7 @@ export class DesignService {
         };
     }
 
-    async update(
-        id: string,
-        data: DesignUpdateInput
-    ): Promise<DesignDocument | null> {
+    async update(id: string, data: DesignUpdateInput): Promise<DesignDocument | null> {
         return DesignModel.findByIdAndUpdate(id, { $set: data }, { new: true });
     }
 
@@ -81,7 +74,7 @@ export class DesignService {
         const skip = (page - 1) * limit;
         const [designs, total] = await Promise.all([
             DesignModel.find(query)
-                .sort({ score: { $meta: "textScore" } })
+                .sort({ score: { $meta: 'textScore' } })
                 .skip(skip)
                 .limit(limit),
             DesignModel.countDocuments(query),

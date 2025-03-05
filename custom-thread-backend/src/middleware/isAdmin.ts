@@ -5,7 +5,7 @@ import { logger } from '../config/logger';
 interface AuthRequest extends Request {
     auth?: {
         userId: string;
-        [key: string]: any;
+        sessionId: string;
     };
 }
 

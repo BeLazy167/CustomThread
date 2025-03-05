@@ -10,6 +10,7 @@ import { requestLogger } from './middleware/request-logger.middleware';
 
 // Import routes
 import designRoutes from './routes/v1/design.routes';
+import orderRoutes from './routes/v1/order.routes';
 
 // Create Express app
 const app = express();
@@ -59,8 +60,14 @@ app.use(compression());
 app.use(morgan('combined', { stream }));
 app.use(requestLogger);
 
-// Parse JSON bodies
-app.use(express.json({ limit: '50mb' }));
+// Parse JSON bodies for all routes except the Stripe webhook
+app.use((req, res, next) => {
+    if (req.originalUrl === `${appConfig.apiPrefix}/orders/webhook`) {
+        next();
+    } else {
+        express.json({ limit: '50mb' })(req, res, next);
+    }
+});
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Pre-flight requests
@@ -78,6 +85,7 @@ logger.info('API Configuration', {
 
 // API Routes
 app.use(`${appConfig.apiPrefix}/designs`, designRoutes);
+app.use(`${appConfig.apiPrefix}/orders`, orderRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

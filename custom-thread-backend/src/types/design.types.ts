@@ -17,6 +17,7 @@ export interface Design {
 
 export interface DesignCreateInput {
     userId: string;
+    username?: string;
     designDetail: DesignDetail;
     image: string;
     decal?: string;
@@ -30,9 +31,10 @@ export interface DesignUpdateInput {
 
 export interface DesignQueryOptions {
     userId?: string;
+    userName?: string;
     tags?: string[];
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: "asc" | "desc";
+    sortOrder?: 'asc' | 'desc';
 }

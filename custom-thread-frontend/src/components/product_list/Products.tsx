@@ -10,6 +10,7 @@ interface Design {
     id: string;
     userId: string;
     image: string;
+    userName: string;
     designDetail?: {
         title?: string;
         price?: number;

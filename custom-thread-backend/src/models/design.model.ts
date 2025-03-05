@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { Design } from "../types/design.types";
+import mongoose, { Schema, Document } from 'mongoose';
+import { Design } from '../types/design.types';
 
 export interface DesignDocument extends Design, Document {}
 
@@ -10,9 +10,9 @@ const designSchema = new Schema(
             required: true,
             index: true,
         },
-        userName:{
-            type:String,
-            required:true,
+        userName: {
+            type: String,
+            required: true,
         },
         designDetail: {
             title: {
@@ -65,14 +65,11 @@ const designSchema = new Schema(
 );
 
 // Indexes
-designSchema.index({ "designDetail.tags": 1 });
+designSchema.index({ 'designDetail.tags': 1 });
 designSchema.index({ createdAt: -1 });
 designSchema.index({
-    "designDetail.title": "text",
-    "designDetail.description": "text",
+    'designDetail.title': 'text',
+    'designDetail.description': 'text',
 });
 
-export const DesignModel = mongoose.model<DesignDocument>(
-    "Design",
-    designSchema
-);
+export const DesignModel = mongoose.model<DesignDocument>('Design', designSchema);

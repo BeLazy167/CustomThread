@@ -1,13 +1,27 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { createDesignSlice, DesignSlice } from "./slices/design-slice";
 import { createCartSlice, CartSlice } from "./slices/cart-slice";
 
 type Store = DesignSlice & CartSlice;
 
-export const useStore = create<Store>()((...args) => ({
-    ...createDesignSlice(...args),
-    ...createCartSlice(...args),
-}));
+export const useStore = create<Store>()(
+    persist(
+        (...args) => ({
+            ...createDesignSlice(...args),
+            ...createCartSlice(...args),
+        }),
+        {
+            name: "custom-thread-store",
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                items: state.items,
+                total: state.total,
+                details: state.details,
+            }),
+        }
+    )
+);
 
 // Utility hook for better type inference
 export const useDesignDetails = () => {
