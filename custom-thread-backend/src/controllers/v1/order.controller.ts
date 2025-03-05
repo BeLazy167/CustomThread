@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import Order from '../../models/order.model';
 import Stripe from 'stripe';
 import { DesignModel } from '../../models/design.model';
+
+// Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 type CheckoutSessionRequest = {
@@ -114,7 +116,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         }
 
         // Create order in pending state
-        const order = new Order({
+        const order = await Order.create({
             userId: req.auth.userId,
             items: orderItems,
             shippingDetails: checkoutSessionRequest.shippingDetails,
@@ -137,8 +139,8 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
             success_url: `${process.env.FRONTEND_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/cart`,
             metadata: {
-                orderId: order._id.toString(),
-                userIdId: req.auth.userId,
+                orderId: order.id,
+                userId: req.auth.userId,
             },
         });
 
@@ -149,16 +151,16 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
             });
         }
 
-        // Save the order
-        await order.save();
-
         return res.status(200).json({
             success: true,
             session,
         });
     } catch (error) {
         console.error('Error creating checkout session:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : 'Internal Server Error',
+        });
     }
 };
 
@@ -182,7 +184,13 @@ export const stripeWebhook = async (req: Request, res: Response) => {
     if (event.type === 'checkout.session.completed') {
         try {
             const session = event.data.object as Stripe.Checkout.Session;
-            const order = await Order.findById(session.metadata?.orderId);
+            const orderId = session.metadata?.orderId;
+
+            if (!orderId) {
+                return res.status(400).json({ message: 'Order ID not found in session metadata' });
+            }
+
+            const order = await Order.findById(orderId);
 
             if (!order) {
                 return res.status(404).json({ message: 'Order not found' });
@@ -291,7 +299,7 @@ const createLineItems = (items: CheckoutSessionRequest['items'], designs: any[])
         if (item.customizations?.color) {
             description += `, Color: ${item.customizations.color}`;
         } else {
-            description += `, Color: ${design.color}`;
+            description += `, Color: ${design.designDetail.color}`;
         }
 
         if (item.customizations?.text) {
@@ -311,7 +319,7 @@ const createLineItems = (items: CheckoutSessionRequest['items'], designs: any[])
                     images: [design.image],
                     metadata: {
                         designId: design._id.toString(),
-                        decal: design.decal,
+                        decal: design.decal || '',
                     },
                 },
                 unit_amount: Math.round(design.designDetail.price * 100), // Convert to cents

@@ -1,6 +1,6 @@
 # CustomThread Backend
 
-A robust Node.js backend service for the CustomThread application, built with Express.js and TypeScript. This service handles design management, user authentication, and image processing.
+A robust Node.js backend service for the CustomThread application, built with Express.js and TypeScript. This service handles design management, user authentication, image processing, and payment processing with Stripe.
 
 ## 🚀 Quick Start
 
@@ -28,12 +28,16 @@ src/
 │   └── logger.ts       # Logging configuration
 ├── controllers/        # Request handlers
 │   └── v1/            # API version 1 controllers
+│       ├── design.controller.ts  # Design management
+│       └── order.controller.ts   # Order & payment processing
 ├── middleware/         # Express middleware
 │   ├── auth.ts        # Authentication middleware
 │   ├── error.middleware.ts  # Error handling
+│   ├── isAdmin.ts     # Admin authorization
 │   └── validate-request.ts  # Request validation
 ├── models/            # MongoDB models
-│   └── design.model.ts
+│   ├── design.model.ts
+│   └── order.model.ts
 ├── routes/            # API routes
 │   └── v1/           # API version 1 routes
 ├── types/            # TypeScript type definitions
@@ -64,6 +68,17 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # Clerk Authentication
 CLERK_SECRET_KEY=your_clerk_secret_key
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+WEBHOOK_ENDPOINT_SECRET=your_stripe_webhook_secret
+
+# Frontend URL (for success/cancel redirects)
+FRONTEND_URL=http://localhost:5173
+
+# Admin Configuration
+ADMIN_USER_ID=your_admin_user_id
 ```
 
 ## 🔒 Authentication & Authorization
@@ -96,6 +111,21 @@ The `authenticate` middleware:
 - Attaches it to `req.auth`
 - Rejects unauthorized requests with 401
 
+### Admin Authorization
+
+For admin-only routes, we use the `isAdmin` middleware:
+
+```typescript
+// Example admin route
+router.patch('/orders/:orderId/status', authenticate, isAdmin, orderController.updateOrderStatus);
+```
+
+The `isAdmin` middleware:
+
+- Checks if the authenticated user has admin privileges
+- Allows the request to proceed if the user is an admin
+- Returns a 403 Forbidden response if the user is not an admin
+
 ## 🎨 Design Submission
 
 ### Design Creation Flow
@@ -119,6 +149,7 @@ interface DesignDetail {
 
 interface Design {
     userId: string; // From auth token
+    username: string; // Username for display
     designDetail: DesignDetail;
     image: string; // Cloudinary URL
     decal?: string; // Optional Cloudinary URL
@@ -132,6 +163,7 @@ const designValidation = {
     createDesign: {
         body: {
             userId: optional(), // Extracted from auth token
+            username: string().optional(),
             designDetail: {
                 title: string().min(3).max(100),
                 description: string().max(1000).optional(),
@@ -146,28 +178,73 @@ const designValidation = {
 };
 ```
 
-### Error Handling
+## 💳 Payment Processing with Stripe
 
-Design submission errors are handled with specific error messages:
+### Order & Checkout Flow
 
-- **401**: Authentication errors (invalid/missing token)
-- **400**: Validation errors (invalid data format)
-- **500**: Server errors (database/processing failures)
+1. **Cart Creation**: User adds designs to their cart
+2. **Checkout Initiation**: User provides shipping details and initiates checkout
+3. **Order Creation**: Backend creates a pending order in the database
+4. **Stripe Session**: Backend creates a Stripe checkout session
+5. **Payment Processing**: User completes payment on Stripe-hosted page
+6. **Webhook Handling**: Stripe sends webhook events to update order status
+7. **Order Confirmation**: Order status is updated based on payment result
 
-Example error response:
+### Checkout Request Schema
 
-```json
-{
-    "message": "Validation failed",
-    "errors": [
-        {
-            "code": "invalid_type",
-            "path": ["body", "designDetail", "title"],
-            "message": "Title is required"
-        }
-    ]
+```typescript
+interface CheckoutSessionRequest {
+    items: {
+        designId: string;
+        quantity: number;
+        size: string;
+        customizations?: {
+            color?: string;
+            text?: string;
+            placement?: string;
+        };
+    }[];
+    shippingDetails: {
+        name: string;
+        email: string;
+        address: string;
+        city: string;
+        contact: string;
+        country: string;
+        postalCode: string;
+    };
 }
 ```
+
+### Stripe Integration
+
+The application integrates with Stripe for secure payment processing:
+
+1. **Checkout Session Creation**:
+
+    - Creates a Stripe checkout session with product details
+    - Configures success and cancel URLs
+    - Stores order ID in session metadata
+
+2. **Webhook Handling**:
+
+    - Listens for Stripe webhook events
+    - Processes `checkout.session.completed` events
+    - Updates order status based on payment result
+    - Handles payment failures and successes
+
+3. **Testing Stripe Integration**:
+    - Use Stripe test mode with test API keys
+    - Use test card numbers (e.g., 4242 4242 4242 4242 for success)
+    - Test webhooks locally using Stripe CLI
+
+### Order Management
+
+Administrators can manage orders through the API:
+
+1. **View Orders**: Get all orders or a specific order
+2. **Update Status**: Change order status (pending, confirmed, processing, shipped, delivered, cancelled)
+3. **Order Tracking**: Each order has a unique ID for tracking
 
 ## 🔄 CORS Configuration
 
