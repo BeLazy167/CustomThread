@@ -14,6 +14,7 @@ interface DesignDetail {
 }
 
 interface DesignSubmission {
+    userName: string;
     userId: string;
     designDetail: DesignDetail;
     image: string;
@@ -47,7 +48,13 @@ export const useSubmitDesign = () => {
     const { userId } = useAuth();
 
     return useMutation({
-        mutationFn: async (imageData: string) => {
+        mutationFn: async ({
+            imageData,
+            username,
+        }: {
+            imageData: string;
+            username: string;
+        }) => {
             if (!userId) {
                 throw new Error("User not authenticated");
             }
@@ -86,6 +93,7 @@ export const useSubmitDesign = () => {
 
                 const designData: DesignSubmission = {
                     userId,
+                    userName: username,
                     designDetail: {
                         title: details.title,
                         description: details.description || "",
