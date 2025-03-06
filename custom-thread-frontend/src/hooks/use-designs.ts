@@ -26,3 +26,11 @@ export function useSearchDesigns(query: string, params = {}) {
         enabled: !!query, // Only run the query if query is provided
     });
 }
+
+// For getting random designs
+export function useRandomDesigns(limit: number = 3) {
+    return useQuery({
+        queryKey: ["designs", "random", limit],
+        queryFn: () => designApi.getRandomDesigns(limit),
+    });
+}

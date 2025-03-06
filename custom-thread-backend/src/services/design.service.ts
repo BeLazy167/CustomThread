@@ -87,4 +87,14 @@ export class DesignService {
             totalPages: Math.ceil(total / limit),
         };
     }
+
+    async getRandomDesigns(limit: number = 3): Promise<DesignDocument[]> {
+        // Use MongoDB's aggregation pipeline with $sample to get random documents
+        const randomDesigns = await DesignModel.aggregate([
+            { $sample: { size: limit } },
+            { $match: { 'designDetail.price': { $exists: true } } }, // Ensure designs have prices
+        ]);
+
+        return randomDesigns;
+    }
 }

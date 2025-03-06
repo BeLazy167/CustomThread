@@ -56,11 +56,11 @@ function App() {
                                         path="/checkout"
                                         element={<Checkout />}
                                     />
+                                    <Route
+                                        path="/profile"
+                                        element={<ProfilePage />}
+                                    />
                                 </Route>
-                                <Route
-                                    path="/profile"
-                                    element={<ProfilePage />}
-                                />
                                 <Route
                                     path="/products"
                                     element={<ProductsPage />}

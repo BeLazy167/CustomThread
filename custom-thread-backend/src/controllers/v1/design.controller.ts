@@ -120,4 +120,21 @@ export class DesignController {
             });
         }
     };
+
+    getRandomDesigns = async (req: Request, res: Response) => {
+        try {
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
+
+            const randomDesigns = await this.designService.getRandomDesigns(limit);
+
+            res.json({
+                designs: randomDesigns,
+                count: randomDesigns.length,
+            });
+        } catch (error) {
+            res.status(400).json({
+                message: error instanceof Error ? error.message : 'Failed to get random designs',
+            });
+        }
+    };
 }

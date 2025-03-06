@@ -27,8 +27,8 @@ export default function Receipt() {
     };
 
     return (
-        <div className="w-full flex items-center justify-center bg-transparent p-4">
-            <Card className="max-w-screen-xl shadow-lg border border-gray-300">
+        <div className="container mx-auto p-4 max-w-7xl flex items-center justify-center">
+            <Card className="w-full shadow-lg border border-gray-300">
                 <CardHeader>
                     <CardTitle className="text-3xl font-bold font-mono text-center">
                         RECEIPT

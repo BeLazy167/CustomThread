@@ -33,7 +33,7 @@ export default function CheckoutSuccess() {
     }, [clearCart]);
 
     return (
-        <div className="container mx-auto py-10 px-4">
+        <div className="container mx-auto py-10 px-4 max-w-7xl">
             <div className="max-w-2xl mx-auto">
                 <Card className="border-green-500 shadow-lg">
                     <CardHeader className="text-center pb-2">

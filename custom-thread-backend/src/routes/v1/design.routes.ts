@@ -18,6 +18,8 @@ router
 
 router.get('/search', designController.searchDesigns);
 
+router.get('/random', designController.getRandomDesigns);
+
 router
     .route('/:id')
     .get(designController.getDesign as unknown as RequestHandler)

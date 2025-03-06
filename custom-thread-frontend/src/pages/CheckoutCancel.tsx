@@ -30,7 +30,7 @@ export default function CheckoutCancel() {
     }, [items.length]);
 
     return (
-        <div className="container mx-auto py-10 px-4">
+        <div className="container mx-auto py-10 px-4 max-w-7xl">
             <div className="max-w-md mx-auto">
                 <Card className="border-amber-500 shadow-lg">
                     <CardHeader className="text-center pb-2">
