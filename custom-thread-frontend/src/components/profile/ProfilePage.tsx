@@ -642,19 +642,12 @@ export default function ProfilePage() {
             {/* Specialties */}
             <div className="flex flex-wrap gap-2 mb-10 justify-center md:justify-start">
                 {userData.specialties.map((specialty, index) => (
-                    <motion.div
-                        key={specialty}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
+                    <Badge
+                        key={index}
+                        className="bg-primary/10 text-primary hover:bg-primary/20 border-none"
                     >
-                        <Badge
-                            variant="secondary"
-                            className="bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-800/50 text-sm py-1.5 px-3 rounded-full"
-                        >
-                            {specialty}
-                        </Badge>
-                    </motion.div>
+                        {specialty}
+                    </Badge>
                 ))}
             </div>
 
@@ -817,7 +810,7 @@ export default function ProfilePage() {
                                                         }
                                                     >
                                                         {pieData.map(
-                                                            (entry, index) => (
+                                                            (_, index) => (
                                                                 <Cell
                                                                     key={`cell-${index}`}
                                                                     fill={

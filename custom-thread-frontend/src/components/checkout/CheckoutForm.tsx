@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCartStore } from "@/store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +16,8 @@ interface ShippingDetails {
 }
 
 export function CheckoutForm() {
-    const navigate = useNavigate();
     const { toast } = useToast();
-    const { items, clearCart } = useCartStore();
-    const [isLoading, setIsLoading] = useState(false);
+    const { items } = useCartStore();
     const [shippingDetails, setShippingDetails] = useState<ShippingDetails>({
         name: "",
         email: "",
@@ -45,8 +42,6 @@ export function CheckoutForm() {
         if (!validateForm()) {
             return;
         }
-
-        setIsLoading(true);
 
         try {
             // Format the cart items for the API
@@ -85,8 +80,6 @@ export function CheckoutForm() {
                     "There was an error processing your checkout. Please try again.",
                 variant: "destructive",
             });
-        } finally {
-            setIsLoading(false);
         }
     };
 

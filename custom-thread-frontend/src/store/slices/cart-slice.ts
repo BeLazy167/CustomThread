@@ -1,5 +1,4 @@
 import { StateCreator } from "zustand";
-import { persist } from "zustand/middleware";
 
 export interface CartItem {
     id: string;

@@ -17,7 +17,6 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
-    Info,
 } from "lucide-react";
 import {
     Sheet,
@@ -26,8 +25,8 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { useAddToCart } from "@/hooks/use-cart";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/components/ui/use-toast";
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -52,6 +51,7 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState<string | null>("description");
     const addToCart = useAddToCart();
+    const { toast } = useToast();
 
     // Default product data if none is provided
     const product = productData || {
@@ -97,25 +97,27 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
     };
 
     const handleAddToCart = () => {
-        try {
-            // Create cart item
-            const cartItem = {
-                productId: product.id,
-                name: product.name,
-                price: product.price,
-                image: product.image || "/placeholder.jpg",
-                size: selectedSize,
-                quantity: quantity,
-                isCustomDesign: product.isCustomDesign || false,
-            };
-
-            // Add to cart using React Query mutation
-            addToCart.mutate(cartItem);
-            toast.success("Added to cart successfully!");
-        } catch (error: unknown) {
-            console.error("Error in handleAddToCart:", error);
-            toast.error("Something went wrong");
+        if (!selectedSize) {
+            toast({
+                title: "Please select a size",
+                description: "You must select a size before adding to cart",
+                variant: "destructive",
+            });
+            return;
         }
+
+        const cartItem = {
+            id: uuidv4(),
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            size: selectedSize,
+            quantity: quantity,
+            isCustomDesign: false,
+        };
+
+        addToCart.mutate(cartItem);
     };
 
     return (

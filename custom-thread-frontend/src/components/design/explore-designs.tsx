@@ -8,6 +8,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { useAddToCart } from "@/hooks/use-cart";
+import { v4 as uuidv4 } from "uuid";
 
 interface DesignData {
     id: string;
@@ -42,9 +43,9 @@ export default function ExploreDesign({ designData }: ExploreDesignProps) {
         createdAt: "2024-02-27",
     };
 
-    const handleAddToCart = () => {
-        // Create cart item with custom design
+    const handleAddToCart = (design: DesignData) => {
         const cartItem = {
+            id: uuidv4(), // Generate a unique ID
             productId: design.id,
             name: design.name,
             price: design.price,
@@ -54,7 +55,6 @@ export default function ExploreDesign({ designData }: ExploreDesignProps) {
             isCustomDesign: true,
         };
 
-        // Add to cart using React Query mutation
         addToCart.mutate(cartItem);
     };
 
@@ -100,7 +100,7 @@ export default function ExploreDesign({ designData }: ExploreDesignProps) {
                 <Button
                     size="lg"
                     className="w-full bg-black text-white hover:bg-black"
-                    onClick={handleAddToCart}
+                    onClick={() => handleAddToCart(design)}
                     disabled={addToCart.isPending}
                 >
                     {addToCart.isPending ? (
@@ -188,7 +188,7 @@ export default function ExploreDesign({ designData }: ExploreDesignProps) {
                         <Button
                             className="w-full"
                             size="lg"
-                            onClick={handleAddToCart}
+                            onClick={() => handleAddToCart(design)}
                             disabled={addToCart.isPending}
                         >
                             Purchase for ${design.price.toFixed(2)}
