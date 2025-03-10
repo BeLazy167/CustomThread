@@ -1,17 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "@/store";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { orderApi } from "@/services/api";
 
@@ -139,127 +130,104 @@ export function CheckoutForm() {
     };
 
     return (
-        <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-                <CardTitle className="text-xl">Shipping Information</CardTitle>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            placeholder="John Doe"
-                            value={shippingDetails.name}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 col-span-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                        id="name"
+                        name="name"
+                        placeholder="John Doe"
+                        value={shippingDetails.name}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="name"
+                    />
+                </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="john@example.com"
-                            value={shippingDetails.email}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
+                <div className="space-y-2 col-span-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={shippingDetails.email}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="email"
+                    />
+                </div>
+            </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input
-                            id="address"
-                            name="address"
-                            placeholder="123 Main St"
-                            value={shippingDetails.address}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
+            <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                    id="address"
+                    name="address"
+                    placeholder="123 Main St"
+                    value={shippingDetails.address}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="street-address"
+                />
+            </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input
-                                id="city"
-                                name="city"
-                                placeholder="New York"
-                                value={shippingDetails.city}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                        id="city"
+                        name="city"
+                        placeholder="New York"
+                        value={shippingDetails.city}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="address-level2"
+                    />
+                </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="postalCode">Postal Code</Label>
-                            <Input
-                                id="postalCode"
-                                name="postalCode"
-                                placeholder="10001"
-                                value={shippingDetails.postalCode}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </div>
-                    </div>
+                <div className="space-y-2">
+                    <Label htmlFor="postalCode">Postal Code</Label>
+                    <Input
+                        id="postalCode"
+                        name="postalCode"
+                        placeholder="10001"
+                        value={shippingDetails.postalCode}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="postal-code"
+                    />
+                </div>
+            </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
-                        <Input
-                            id="country"
-                            name="country"
-                            placeholder="United States"
-                            value={shippingDetails.country}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                        id="country"
+                        name="country"
+                        placeholder="United States"
+                        value={shippingDetails.country}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="country-name"
+                    />
+                </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="contact">Phone Number</Label>
-                        <Input
-                            id="contact"
-                            name="contact"
-                            placeholder="+1 (555) 123-4567"
-                            value={shippingDetails.contact}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-                </CardContent>
-
-                <CardFooter className="flex flex-col gap-4">
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                            </>
-                        ) : (
-                            "Proceed to Payment"
-                        )}
-                    </Button>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => navigate(-1)}
-                        disabled={isLoading}
-                    >
-                        Back
-                    </Button>
-                </CardFooter>
-            </form>
-        </Card>
+                <div className="space-y-2">
+                    <Label htmlFor="contact">Phone Number</Label>
+                    <Input
+                        id="contact"
+                        name="contact"
+                        placeholder="+1 (555) 123-4567"
+                        value={shippingDetails.contact}
+                        onChange={handleInputChange}
+                        required
+                        autoComplete="tel"
+                    />
+                </div>
+            </div>
+        </form>
     );
 }

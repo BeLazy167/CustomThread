@@ -1,4 +1,5 @@
 import { useCartStore } from "@/store";
+import { CartItem } from "@/store/slices/cart-slice";
 import { toast } from "sonner";
 
 // Hook for getting cart data
@@ -18,7 +19,7 @@ export function useAddToCart() {
     const { addItem, setIsLoading, setError, isLoading, error } =
         useCartStore();
 
-    const mutate = async (cartItem: any) => {
+    const mutate = async (cartItem: CartItem) => {
         try {
             setIsLoading(true);
             setError(null);
