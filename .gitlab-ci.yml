@@ -1,0 +1,104 @@
+stages:
+    - build
+    - test
+    - deploy
+
+variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+
+# Cache dependencies across jobs
+cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+        - custom-thread-frontend/node_modules/
+        - custom-thread-backend/node_modules/
+
+# Frontend Jobs
+frontend-build:
+    stage: build
+    image: node:18
+    script:
+        - cd custom-thread-frontend
+        - npm ci
+        - npm run build
+    artifacts:
+        paths:
+            - custom-thread-frontend/build/
+    rules:
+        - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "qa"
+
+frontend-test:
+    stage: test
+    image: node:18
+    script:
+        - cd custom-thread-frontend
+        - npm ci
+        - npm test -- --watchAll=false
+    dependencies:
+        - frontend-build
+    rules:
+        - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "qa"
+
+# Backend Jobs
+backend-build:
+    stage: build
+    image: node:18
+    script:
+        - cd custom-thread-backend
+        - npm ci
+        - npm run build
+    artifacts:
+        paths:
+            - custom-thread-backend/dist/
+    rules:
+        - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "qa"
+
+backend-test:
+    stage: test
+    image: node:18
+    script:
+        - cd custom-thread-backend
+        - npm ci
+        - npm test
+    dependencies:
+        - backend-build
+    rules:
+        - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "qa"
+
+# Deployment Jobs
+deploy-dev:
+    stage: deploy
+    image: alpine:latest
+    script:
+        - echo "Deploying to development environment"
+        # Add your deployment commands here
+    environment:
+        name: development
+    only:
+        - dev
+    when: manual
+
+deploy-qa:
+    stage: deploy
+    image: alpine:latest
+    script:
+        - echo "Deploying to QA environment"
+        # Add your deployment commands here
+    environment:
+        name: qa
+    only:
+        - qa
+    when: manual
+
+deploy-production:
+    stage: deploy
+    image: alpine:latest
+    script:
+        - echo "Deploying to production environment"
+        # Add your deployment commands here
+    environment:
+        name: production
+    only:
+        - main
+    when: manual
