@@ -2,18 +2,35 @@ pipeline {
     agent any
     
     environment {
+        // Directory paths
         FRONTEND_DIR = "custom-thread-frontend"
         BACKEND_DIR = "custom-thread-backend"
+        
+        // Branch and environment detection
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        // Define environment-specific variables
         DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : (BRANCH_NAME == 'qa' ? 'qa' : 'development')}"
+        
+        // Docker image and container names
         FRONTEND_IMAGE = "custom-thread-frontend-${DEPLOY_ENV}"
         BACKEND_IMAGE = "custom-thread-backend-${DEPLOY_ENV}"
         FRONTEND_CONTAINER = "frontend-${DEPLOY_ENV}"
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
+        
         // Port mapping based on environment
         FRONTEND_PORT = "${BRANCH_NAME == 'main' ? '3000' : (BRANCH_NAME == 'qa' ? '3001' : '3002')}"
         BACKEND_PORT = "${BRANCH_NAME == 'main' ? '4000' : (BRANCH_NAME == 'qa' ? '4001' : '4002')}"
+        
+        // Environment-specific configuration
+        MONGODB_URI = credentials('mongodb-uri')
+        CLOUDINARY_URL = credentials('cloudinary-url')
+        CLOUDINARY_CLOUD_NAME = credentials('cloudinary-cloud-name')
+        CLOUDINARY_API_KEY = credentials('cloudinary-api-key')
+        CLOUDINARY_API_SECRET = credentials('cloudinary-api-secret')
+        CLERK_SECRET_KEY = credentials('clerk-secret-key')
+        CLERK_PUBLISHABLE_KEY = credentials('clerk-publishable-key')
+        STRIPE_SECRET_KEY = credentials('stripe-secret-key')
+        STRIPE_PUBLISHABLE_KEY = credentials('stripe-publishable-key')
+        WEBHOOK_ENDPOINT_SECRET = credentials('webhook-endpoint-secret')
     }
     
     stages {
@@ -24,12 +41,72 @@ pipeline {
             }
         }
         
+        stage('Generate Environment Files') {
+            steps {
+                script {
+                    // Create frontend .env file
+                    writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
+                        VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
+                        VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                        VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+                        VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+                        VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+                        VITE_API_URL=http://localhost:${BACKEND_PORT}
+                        VITE_ENVIRONMENT=${DEPLOY_ENV}
+                        VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+                    """
+                    
+                    // Create backend .env file
+                    writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
+                        # Server Configuration
+                        NODE_ENV=${DEPLOY_ENV}
+                        PORT=4000
+                        
+                        # Database
+                        MONGODB_URI=${MONGODB_URI}
+                        
+                        # CORS (comma-separated list of allowed origins)
+                        CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
+                        
+                        # Cloudinary
+                        CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                        CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+                        CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+                        
+                        # Clerk Authentication
+                        CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+                        CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+                        
+                        # Stripe Configuration
+                        STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+                        STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+                        WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET}
+                    """
+                }
+            }
+        }
+        
         stage('Frontend Build') {
             steps {
                 dir("${FRONTEND_DIR}") {
+                    // Copy the environment-specific .env file
+                    sh "cp .env.${DEPLOY_ENV} .env"
+                    
                     sh 'npm ci'
                     sh 'npm run build'
-                    sh "docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} ."
+                    
+                    // Build Docker image with environment variables
+                    sh """
+                    docker build \
+                        --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                        --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
+                        --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                        --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                        --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                        --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
+                    """
+                    
                     sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
                 }
             }
@@ -38,9 +115,30 @@ pipeline {
         stage('Backend Build') {
             steps {
                 dir("${BACKEND_DIR}") {
+                    // Copy the environment-specific .env file
+                    sh "cp .env.${DEPLOY_ENV} .env"
+                    
                     sh 'npm ci'
                     sh 'npm run build'
-                    sh "docker build -t ${BACKEND_IMAGE}:${BUILD_NUMBER} ."
+                    
+                    // Build Docker image with environment variables
+                    sh """
+                    docker build \
+                        --build-arg NODE_ENV=${DEPLOY_ENV} \
+                        --build-arg PORT=4000 \
+                        --build-arg MONGODB_URI=${MONGODB_URI} \
+                        --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                        --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                        --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                        --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
+                        --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
+                        --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                        --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
+                        --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
+                        -t ${BACKEND_IMAGE}:${BUILD_NUMBER} .
+                    """
+                    
                     sh "docker tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${BACKEND_IMAGE}:latest"
                 }
             }
@@ -79,26 +177,44 @@ pipeline {
                     sh "docker stop ${BACKEND_CONTAINER} || true"
                     sh "docker rm ${BACKEND_CONTAINER} || true"
                     
-                    // Deploy frontend container
-                    sh """
-                    docker run -d \
-                        -p ${FRONTEND_PORT}:3000 \
-                        --name ${FRONTEND_CONTAINER} \
-                        --restart unless-stopped \
-                        --health-cmd='curl -f http://localhost:3000 || exit 1' \
-                        --health-interval=30s \
-                        ${FRONTEND_IMAGE}:latest
-                    """
-                    
-                    // Deploy backend container
+                    // Deploy backend container with environment variables
                     sh """
                     docker run -d \
                         -p ${BACKEND_PORT}:4000 \
                         --name ${BACKEND_CONTAINER} \
+                        -e NODE_ENV=${DEPLOY_ENV} \
+                        -e PORT=4000 \
+                        -e MONGODB_URI=${MONGODB_URI} \
+                        -e CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                        -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                        -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                        -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
+                        -e CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
+                        -e CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                        -e STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
+                        -e STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        -e WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
                         --restart unless-stopped \
                         --health-cmd='curl -f http://localhost:4000/health || exit 1' \
                         --health-interval=30s \
                         ${BACKEND_IMAGE}:latest
+                    """
+                    
+                    // Deploy frontend container with environment variables
+                    sh """
+                    docker run -d \
+                        -p ${FRONTEND_PORT}:3000 \
+                        --name ${FRONTEND_CONTAINER} \
+                        -e VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                        -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
+                        -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                        -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                        -e VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                        -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        --restart unless-stopped \
+                        --health-cmd='curl -f http://localhost:3000 || exit 1' \
+                        --health-interval=30s \
+                        ${FRONTEND_IMAGE}:latest
                     """
                     
                     echo "Deployed to ${DEPLOY_ENV} environment"
