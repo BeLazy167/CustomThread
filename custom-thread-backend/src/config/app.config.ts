@@ -1,6 +1,41 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Load environment variables from .env file
+const result = dotenv.config();
+
+// Log environment loading status
+if (result.error) {
+    console.warn('Warning: No .env file found or error loading .env file.');
+}
+
+// Ensure critical environment variables are set
+const checkCriticalEnvVars = () => {
+    const criticalVars = ['MONGODB_URI'];
+    const missing = criticalVars.filter((varName) => !process.env[varName]);
+
+    if (missing.length > 0) {
+        console.warn(`Warning: Missing critical environment variables: ${missing.join(', ')}`);
+        console.warn('Application may not function properly without these variables.');
+    }
+};
+
+checkCriticalEnvVars();
+
+// Log MongoDB URI (redacted) for debugging
+const logMongoDbUri = () => {
+    const uri = process.env.MONGODB_URI;
+    if (uri) {
+        // Mask username/password in the URI for security
+        const maskedUri = uri.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@');
+        console.log(`MongoDB URI from environment: ${maskedUri}`);
+    } else {
+        console.log(
+            'MongoDB URI is not set in environment variables. Using fallback local connection.'
+        );
+    }
+};
+
+logMongoDbUri();
 
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
     .split(',')
@@ -37,6 +72,13 @@ export const appConfig = {
     },
     database: {
         url: process.env.MONGODB_URI || 'mongodb://localhost:27017/custom-thread',
+        // Add additional database configuration options here if needed
+        options: {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        },
     },
     clerk: {
         secretKey: process.env.CLERK_SECRET_KEY,
