@@ -11,28 +11,36 @@ const connectDb = async (): Promise<void> => {
 
         // Set mongoose connection options
         const options = {
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+            serverSelectionTimeoutMS: 10000, // Increased timeout to 10 seconds
             socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
         };
 
         // Connect to MongoDB with options
-        const conn = await mongoose.connect(appConfig.database.url, options);
+        await mongoose.connect(appConfig.database.url, options);
+
+        // Wait a moment to ensure connection is fully established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Verify connection state after connecting
+        if (mongoose.connection.readyState !== 1) {
+            throw new Error(
+                `MongoDB connection not fully established. Current state: ${mongoose.connection.readyState}`
+            );
+        }
 
         // Log successful connection details
-        if (conn.connection.host) {
-            console.log(`MongoDB Connected: ${conn.connection.host}`);
-        } else {
-            // Handle case when host is undefined but connection succeeded
-            const connDetails = {
-                readyState: conn.connection.readyState,
-                name: conn.connection.name,
-                port: conn.connection.port,
-                // Additional details that might help debugging
-                db: conn.connection.db ? conn.connection.db.databaseName : 'unknown',
-            };
-            console.log(`MongoDB Connected successfully, but host is undefined.`);
-            console.log(`Connection details: ${JSON.stringify(connDetails)}`);
-        }
+        const connDetails = {
+            readyState: mongoose.connection.readyState,
+            name: mongoose.connection.name,
+            host: mongoose.connection.host || 'unknown',
+            port: mongoose.connection.port,
+            db: mongoose.connection.db ? mongoose.connection.db.databaseName : 'unknown',
+        };
+
+        console.log(`MongoDB Connected: ${connDetails.host}`);
+        console.log(
+            `Database: ${connDetails.db}, Connection state: ${connDetails.readyState === 1 ? 'connected' : 'not fully connected'}`
+        );
     } catch (error: any) {
         console.error('MongoDB connection error:');
         if (error.name === 'MongoParseError') {
