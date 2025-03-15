@@ -60,7 +60,7 @@ pipeline {
                     writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
                         # Server Configuration
                         NODE_ENV=${DEPLOY_ENV}
-                        PORT=4000
+                        PORT=3001
                         
                         # Database
                         MONGODB_URI=${MONGODB_URI}
