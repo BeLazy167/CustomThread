@@ -13,7 +13,7 @@ export const connectMongo = async () => {
     try {
         await client.connect();
         console.log('Connected to MongoDB');
-        return client.db(process.env.MONGODB_DB_NAME || 'custom-thread');
+        return client.db(process.env.MONGODB_DB_NAME || 'CustomThreads');
     } catch (error) {
         console.error('MongoDB connection error:', error);
         throw error;
