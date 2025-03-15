@@ -19,18 +19,6 @@ pipeline {
         // Port mapping based on environment
         FRONTEND_PORT = "${BRANCH_NAME == 'main' ? '3000' : (BRANCH_NAME == 'qa' ? '3000' : '3000')}"
         BACKEND_PORT = "${BRANCH_NAME == 'main' ? '3001' : (BRANCH_NAME == 'qa' ? '3001' : '3001')}"
-        
-        // Environment-specific configuration
-        MONGODB_URI = credentials('mongodb-uri')
-        CLOUDINARY_URL = credentials('cloudinary-url')
-        CLOUDINARY_CLOUD_NAME = credentials('cloudinary-cloud-name')
-        CLOUDINARY_API_KEY = credentials('cloudinary-api-key')
-        CLOUDINARY_API_SECRET = credentials('cloudinary-api-secret')
-        CLERK_SECRET_KEY = credentials('clerk-secret-key')
-        CLERK_PUBLISHABLE_KEY = credentials('clerk-publishable-key')
-        STRIPE_SECRET_KEY = credentials('stripe-secret-key')
-        STRIPE_PUBLISHABLE_KEY = credentials('stripe-publishable-key')
-        WEBHOOK_ENDPOINT_SECRET = credentials('webhook-endpoint-secret')
     }
     
     stages {
@@ -43,45 +31,58 @@ pipeline {
         
         stage('Generate Environment Files') {
             steps {
-                script {
-                    // Create frontend .env file
-                    writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
-                        VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
-                        VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-                        VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-                        VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-                        VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                        VITE_API_URL=http://localhost:${BACKEND_PORT}
-                        VITE_ENVIRONMENT=${DEPLOY_ENV}
-                        VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-                    """
-                    
-                    // Create backend .env file
-                    writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
-                        # Server Configuration
-                        NODE_ENV=${DEPLOY_ENV}
-                        PORT=3001
+                withCredentials([
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI'),
+                    string(credentialsId: 'cloudinary-url', variable: 'CLOUDINARY_URL'),
+                    string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
+                    string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
+                    string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET'),
+                    string(credentialsId: 'clerk-secret-key', variable: 'CLERK_SECRET_KEY'),
+                    string(credentialsId: 'clerk-publishable-key', variable: 'CLERK_PUBLISHABLE_KEY'),
+                    string(credentialsId: 'stripe-secret-key', variable: 'STRIPE_SECRET_KEY'),
+                    string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
+                    string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
+                ]) {
+                    script {
+                        // Create frontend .env file
+                        writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
+                            VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
+                            VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                            VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+                            VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+                            VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+                            VITE_API_URL=http://localhost:${BACKEND_PORT}
+                            VITE_ENVIRONMENT=${DEPLOY_ENV}
+                            VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+                        """
                         
-                        # Database
-                        MONGODB_URI=${MONGODB_URI}
-                        
-                        # CORS (comma-separated list of allowed origins)
-                        CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
-                        
-                        # Cloudinary
-                        CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-                        CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-                        CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-                        
-                        # Clerk Authentication
-                        CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-                        CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                        
-                        # Stripe Configuration
-                        STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-                        STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-                        WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET}
-                    """
+                        // Create backend .env file
+                        writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
+                            # Server Configuration
+                            NODE_ENV=${DEPLOY_ENV}
+                            PORT=3001
+                            
+                            # Database
+                            MONGODB_URI=${MONGODB_URI}
+                            
+                            # CORS (comma-separated list of allowed origins)
+                            CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
+                            
+                            # Cloudinary
+                            CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+                            CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+                            CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+                            
+                            # Clerk Authentication
+                            CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+                            CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+                            
+                            # Stripe Configuration
+                            STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+                            STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+                            WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET}
+                        """
+                    }
                 }
             }
         }
@@ -180,10 +181,10 @@ pipeline {
                     // Deploy backend container with environment variables
                     sh """
                     docker run -d \
-                        -p ${BACKEND_PORT}:4000 \
+                        -p ${BACKEND_PORT}:3001 \
                         --name ${BACKEND_CONTAINER} \
                         -e NODE_ENV=${DEPLOY_ENV} \
-                        -e PORT=4000 \
+                        -e PORT=3001 \
                         -e MONGODB_URI=${MONGODB_URI} \
                         -e CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
                         -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
