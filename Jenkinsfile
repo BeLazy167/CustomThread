@@ -70,20 +70,27 @@ pipeline {
         stage('Frontend Build') {
             steps {
                 dir("${FRONTEND_DIR}") {
-                    sh "cp .env.${DEPLOY_ENV} .env"
-                    sh 'npm i'
-                    sh 'npm run build'
-                    sh """
-                    docker build \
-                        --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
-                        --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
-                        --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                        -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
-                    """
-                    sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
+                    withCredentials([
+                        string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
+                        string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
+                        string(credentialsId: 'clerk-publishable-key', variable: 'CLERK_PUBLISHABLE_KEY'),
+                        string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY')
+                    ]) {
+                        sh "cp .env.${DEPLOY_ENV} .env"
+                        sh 'npm i'
+                        sh 'npm run build'
+                        sh """
+                        docker build \
+                            --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                            --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
+                            --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                            --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                            --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                            --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                            -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
+                        """
+                        sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
+                    }
                 }
             }
         }
@@ -91,26 +98,38 @@ pipeline {
         stage('Backend Build') {
             steps {
                 dir("${BACKEND_DIR}") {
-                    sh "cp .env.${DEPLOY_ENV} .env"
-                    sh 'npm i'
-                    sh 'npm run build'
-                    sh """
-                    docker build \
-                        --build-arg NODE_ENV=${DEPLOY_ENV} \
-                        --build-arg PORT=3001 \
-                        --build-arg MONGODB_URI=${MONGODB_URI} \
-                        --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
-                        --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
-                        --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
-                        --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
-                        --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                        --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
-                        -t ${BACKEND_IMAGE}:${BUILD_NUMBER} .
-                    """
-                    sh "docker tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${BACKEND_IMAGE}:latest"
+                    withCredentials([
+                        string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI'),
+                        string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
+                        string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
+                        string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET'),
+                        string(credentialsId: 'clerk-secret-key', variable: 'CLERK_SECRET_KEY'),
+                        string(credentialsId: 'clerk-publishable-key', variable: 'CLERK_PUBLISHABLE_KEY'),
+                        string(credentialsId: 'stripe-secret-key', variable: 'STRIPE_SECRET_KEY'),
+                        string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
+                        string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
+                    ]) {
+                        sh "cp .env.${DEPLOY_ENV} .env"
+                        sh 'npm i'
+                        sh 'npm run build'
+                        sh """
+                        docker build \
+                            --build-arg NODE_ENV=${DEPLOY_ENV} \
+                            --build-arg PORT=3001 \
+                            --build-arg MONGODB_URI=${MONGODB_URI} \
+                            --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                            --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
+                            --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
+                            --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
+                            --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
+                            --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
+                            --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
+                            --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                            --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
+                            -t ${BACKEND_IMAGE}:${BUILD_NUMBER} .
+                        """
+                        sh "docker tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${BACKEND_IMAGE}:latest"
+                    }
                 }
             }
         }
