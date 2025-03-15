@@ -2,30 +2,23 @@ pipeline {
     agent any
     
     environment {
-        // Directory paths
         FRONTEND_DIR = "custom-thread-frontend"
         BACKEND_DIR = "custom-thread-backend"
-        
-        // Branch and environment detection
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : (BRANCH_NAME == 'qa' ? 'qa' : 'development')}"
-        
-        // Docker image and container names
+        DEPLOY_ENV = "${env.BRANCH_NAME == 'main' ? 'production' : (env.BRANCH_NAME == 'qa' ? 'qa' : 'development')}"
         FRONTEND_IMAGE = "custom-thread-frontend-${DEPLOY_ENV}"
         BACKEND_IMAGE = "custom-thread-backend-${DEPLOY_ENV}"
         FRONTEND_CONTAINER = "frontend-${DEPLOY_ENV}"
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
-        
-        // Port mapping based on environment
-        FRONTEND_PORT = "${BRANCH_NAME == 'main' ? '3000' : (BRANCH_NAME == 'qa' ? '3000' : '3000')}"
-        BACKEND_PORT = "${BRANCH_NAME == 'main' ? '3001' : (BRANCH_NAME == 'qa' ? '3001' : '3001')}"
+        FRONTEND_PORT = "3000"
+        BACKEND_PORT = "3001"
     }
     
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "Building branch: ${BRANCH_NAME} for ${DEPLOY_ENV} environment"
+                echo "Building branch: ${env.BRANCH_NAME} for ${DEPLOY_ENV} environment"
             }
         }
         
@@ -44,43 +37,30 @@ pipeline {
                     string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                 ]) {
                     script {
-                        // Create frontend .env file
                         writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
-                            VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
-                            VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-                            VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-                            VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-                            VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://localhost:${BACKEND_PORT}
-                            VITE_ENVIRONMENT=${DEPLOY_ENV}
-                            VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+                            VITE_CLOUDINARY_URL=${env.CLOUDINARY_URL}
+                            VITE_CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME}
+                            VITE_CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY}
+                            VITE_CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET}
+                            VITE_CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY}
+                            VITE_API_URL=http://localhost:${env.BACKEND_PORT}
+                            VITE_ENVIRONMENT=${env.DEPLOY_ENV}
+                            VITE_STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY}
                         """
                         
-                        // Create backend .env file
                         writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
-                            # Server Configuration
-                            NODE_ENV=${DEPLOY_ENV}
+                            NODE_ENV=${env.DEPLOY_ENV}
                             PORT=3001
-                            
-                            # Database
-                            MONGODB_URI=${MONGODB_URI}
-                            
-                            # CORS (comma-separated list of allowed origins)
-                            CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
-                            
-                            # Cloudinary
-                            CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-                            CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-                            CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-                            
-                            # Clerk Authentication
-                            CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-                            CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            
-                            # Stripe Configuration
-                            STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-                            STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-                            WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET}
+                            MONGODB_URI=${env.MONGODB_URI}
+                            CORS_ORIGIN=http://localhost:${env.FRONTEND_PORT}
+                            CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME}
+                            CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY}
+                            CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET}
+                            CLERK_SECRET_KEY=${env.CLERK_SECRET_KEY}
+                            CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY}
+                            STRIPE_SECRET_KEY=${env.STRIPE_SECRET_KEY}
+                            STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY}
+                            WEBHOOK_ENDPOINT_SECRET=${env.WEBHOOK_ENDPOINT_SECRET}
                         """
                     }
                 }
@@ -90,25 +70,20 @@ pipeline {
         stage('Frontend Build') {
             steps {
                 dir("${FRONTEND_DIR}") {
-                    // Copy the environment-specific .env file
                     sh "cp .env.${DEPLOY_ENV} .env"
-                    
                     sh 'npm i'
                     sh 'npm run build'
-                    
-                    // Build Docker image with environment variables
                     sh """
                     docker build \
-                        --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
-                        --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
-                        --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                        -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
+                        --build-arg VITE_API_URL=http://localhost:${env.BACKEND_PORT} \
+                        --build-arg VITE_ENVIRONMENT=${env.DEPLOY_ENV} \
+                        --build-arg VITE_CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME} \
+                        --build-arg VITE_CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY} \
+                        --build-arg VITE_CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY} \
+                        --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY} \
+                        -t ${env.FRONTEND_IMAGE}:${env.BUILD_NUMBER} .
                     """
-                    
-                    sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
+                    sh "docker tag ${env.FRONTEND_IMAGE}:${env.BUILD_NUMBER} ${env.FRONTEND_IMAGE}:latest"
                 }
             }
         }
@@ -116,93 +91,78 @@ pipeline {
         stage('Backend Build') {
             steps {
                 dir("${BACKEND_DIR}") {
-                    // Copy the environment-specific .env file
                     sh "cp .env.${DEPLOY_ENV} .env"
-                    
                     sh 'npm i'
                     sh 'npm run build'
-                    
-                    // Build Docker image with environment variables
                     sh """
                     docker build \
-                        --build-arg NODE_ENV=${DEPLOY_ENV} \
-                        --build-arg PORT=4000 \
-                        --build-arg MONGODB_URI=${MONGODB_URI} \
-                        --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
-                        --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
-                        --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
-                        --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
-                        --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                        --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
-                        -t ${BACKEND_IMAGE}:${BUILD_NUMBER} .
+                        --build-arg NODE_ENV=${env.DEPLOY_ENV} \
+                        --build-arg PORT=3001 \
+                        --build-arg MONGODB_URI=${env.MONGODB_URI} \
+                        --build-arg CORS_ORIGIN=http://localhost:${env.FRONTEND_PORT} \
+                        --build-arg CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME} \
+                        --build-arg CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY} \
+                        --build-arg CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET} \
+                        --build-arg CLERK_SECRET_KEY=${env.CLERK_SECRET_KEY} \
+                        --build-arg CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY} \
+                        --build-arg STRIPE_SECRET_KEY=${env.STRIPE_SECRET_KEY} \
+                        --build-arg STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY} \
+                        --build-arg WEBHOOK_ENDPOINT_SECRET=${env.WEBHOOK_ENDPOINT_SECRET} \
+                        -t ${env.BACKEND_IMAGE}:${env.BUILD_NUMBER} .
                     """
-                    
-                    sh "docker tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${BACKEND_IMAGE}:latest"
+                    sh "docker tag ${env.BACKEND_IMAGE}:${env.BUILD_NUMBER} ${env.BACKEND_IMAGE}:latest"
                 }
             }
         }
         
-        
         stage('Deploy') {
             when {
                 expression { 
-                    return BRANCH_NAME == 'main' || BRANCH_NAME == 'qa' || BRANCH_NAME == 'dev'
+                    return env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'dev'
                 }
             }
             steps {
                 script {
-                    // Stop and remove existing containers
-                    sh "docker stop ${FRONTEND_CONTAINER} || true"
-                    sh "docker rm ${FRONTEND_CONTAINER} || true"
-                    sh "docker stop ${BACKEND_CONTAINER} || true"
-                    sh "docker rm ${BACKEND_CONTAINER} || true"
+                    sh "docker stop ${env.FRONTEND_CONTAINER} || true"
+                    sh "docker rm ${env.FRONTEND_CONTAINER} || true"
+                    sh "docker stop ${env.BACKEND_CONTAINER} || true"
+                    sh "docker rm ${env.BACKEND_CONTAINER} || true"
                     
-                    // Deploy backend container with environment variables
                     sh """
                     docker run -d \
-                        -p ${BACKEND_PORT}:3001 \
-                        --name ${BACKEND_CONTAINER} \
-                        -e NODE_ENV=${DEPLOY_ENV} \
+                        -p ${env.BACKEND_PORT}:3001 \
+                        --name ${env.BACKEND_CONTAINER} \
+                        -e NODE_ENV=${env.DEPLOY_ENV} \
                         -e PORT=3001 \
-                        -e MONGODB_URI=${MONGODB_URI} \
-                        -e CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
-                        -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
-                        -e CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
-                        -e CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        -e STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
-                        -e STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                        -e WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
+                        -e MONGODB_URI=${env.MONGODB_URI} \
+                        -e CORS_ORIGIN=http://localhost:${env.FRONTEND_PORT} \
+                        -e CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME} \
+                        -e CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY} \
+                        -e CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET} \
+                        -e CLERK_SECRET_KEY=${env.CLERK_SECRET_KEY} \
+                        -e CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY} \
+                        -e STRIPE_SECRET_KEY=${env.STRIPE_SECRET_KEY} \
+                        -e STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY} \
+                        -e WEBHOOK_ENDPOINT_SECRET=${env.WEBHOOK_ENDPOINT_SECRET} \
                         --restart unless-stopped \
-                        --health-cmd='curl -f http://localhost:4000/health || exit 1' \
-                        --health-interval=30s \
-                        ${BACKEND_IMAGE}:latest
+                        ${env.BACKEND_IMAGE}:latest
                     """
                     
-                    // Deploy frontend container with environment variables
                     sh """
                     docker run -d \
-                        -p ${FRONTEND_PORT}:3000 \
-                        --name ${FRONTEND_CONTAINER} \
-                        -e VITE_API_URL=http://localhost:${BACKEND_PORT} \
-                        -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
-                        -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                        -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                        -e VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                        -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        -p ${env.FRONTEND_PORT}:3000 \
+                        --name ${env.FRONTEND_CONTAINER} \
+                        -e VITE_API_URL=http://localhost:${env.BACKEND_PORT} \
+                        -e VITE_ENVIRONMENT=${env.DEPLOY_ENV} \
+                        -e VITE_CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME} \
+                        -e VITE_CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY} \
+                        -e VITE_CLERK_PUBLISHABLE_KEY=${env.CLERK_PUBLISHABLE_KEY} \
+                        -e VITE_STRIPE_PUBLISHABLE_KEY=${env.STRIPE_PUBLISHABLE_KEY} \
                         --restart unless-stopped \
-                        --health-cmd='curl -f http://localhost:3000 || exit 1' \
-                        --health-interval=30s \
-                        ${FRONTEND_IMAGE}:latest
+                        ${env.FRONTEND_IMAGE}:latest
                     """
                     
-                    echo "Deployed to ${DEPLOY_ENV} environment"
-                    echo "Frontend available at: http://localhost:${FRONTEND_PORT}"
-                    echo "Backend available at: http://localhost:${BACKEND_PORT}"
+                    echo "Deployed to ${env.DEPLOY_ENV} environment"
                 }
             }
         }
@@ -210,21 +170,19 @@ pipeline {
     
     post {
         success {
-            echo "Pipeline completed successfully for ${DEPLOY_ENV} environment!"
             slackSend channel: 'team4', 
                       color: 'good', 
-                      message: "✅ Build Successful for ${DEPLOY_ENV}! Frontend: ${FRONTEND_IMAGE}:${BUILD_NUMBER}, Backend: ${BACKEND_IMAGE}:${BUILD_NUMBER}"
+                      message: "✅ Build Successful for ${env.DEPLOY_ENV}! Frontend: ${env.FRONTEND_IMAGE}:${env.BUILD_NUMBER}, Backend: ${env.BACKEND_IMAGE}:${env.BUILD_NUMBER}"
         }
         failure {
-            echo "Pipeline failed for ${DEPLOY_ENV} environment!"
             slackSend channel: 'team4', 
                       color: 'danger', 
-                      message: "❌ Build Failed for ${DEPLOY_ENV}!"
+                      message: "❌ Build Failed for ${env.DEPLOY_ENV}!"
         }
         unstable {
             slackSend channel: 'team4',
                       color: 'warning',
-                      message: "⚠️ Build Unstable for ${DEPLOY_ENV}!"
+                      message: "⚠️ Build Unstable for ${env.DEPLOY_ENV}!"
         }
     }
 }
