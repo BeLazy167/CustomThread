@@ -17,8 +17,8 @@ pipeline {
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
         
         // Port mapping based on environment
-        FRONTEND_PORT = "${BRANCH_NAME == 'main' ? '3000' : (BRANCH_NAME == 'qa' ? '3001' : '3002')}"
-        BACKEND_PORT = "${BRANCH_NAME == 'main' ? '4000' : (BRANCH_NAME == 'qa' ? '4001' : '4002')}"
+        FRONTEND_PORT = "${BRANCH_NAME == 'main' ? '3000' : (BRANCH_NAME == 'qa' ? '3000' : '3000')}"
+        BACKEND_PORT = "${BRANCH_NAME == 'main' ? '3001' : (BRANCH_NAME == 'qa' ? '3001' : '3001')}"
         
         // Environment-specific configuration
         MONGODB_URI = credentials('mongodb-uri')
