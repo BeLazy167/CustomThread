@@ -12,6 +12,7 @@ pipeline {
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
         FRONTEND_PORT = "3000"
         BACKEND_PORT = "3001"
+        DOCKER_NETWORK = "customthread-network-${DEPLOY_ENV}"
     }
     
     stages {
@@ -43,7 +44,7 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://localhost:${BACKEND_PORT}
+                            VITE_API_URL=http://${BACKEND_CONTAINER}:3001
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -52,7 +53,7 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
+                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -81,7 +82,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \
-                            --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                            --build-arg VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
@@ -117,7 +118,7 @@ pipeline {
                             --build-arg NODE_ENV=${DEPLOY_ENV} \
                             --build-arg PORT=3001 \
                             --build-arg MONGODB_URI=${MONGODB_URI} \
-                            --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000 \
                             --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
@@ -142,10 +143,15 @@ pipeline {
             }
             steps {
                 script {
+                    // Clean up existing containers and networks
                     sh "docker stop ${FRONTEND_CONTAINER} || true"
                     sh "docker rm ${FRONTEND_CONTAINER} || true"
                     sh "docker stop ${BACKEND_CONTAINER} || true"
                     sh "docker rm ${BACKEND_CONTAINER} || true"
+                    sh "docker network rm ${DOCKER_NETWORK} || true"
+                    
+                    // Create Docker network
+                    sh "docker network create ${DOCKER_NETWORK} || true"
                     
                     withCredentials([
                         string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI'),
@@ -158,14 +164,16 @@ pipeline {
                         string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
+                        // Run backend container
                         sh """
                         docker run -d \
                             -p ${BACKEND_PORT}:3001 \
                             --name ${BACKEND_CONTAINER} \
+                            --network ${DOCKER_NETWORK} \
                             -e NODE_ENV=${DEPLOY_ENV} \
                             -e PORT=3001 \
                             -e MONGODB_URI=${MONGODB_URI} \
-                            -e CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000 \
                             -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
@@ -178,11 +186,16 @@ pipeline {
                             ${BACKEND_IMAGE}:latest
                         """
                         
+                        // Wait for backend to fully start
+                        sh "sleep 10"
+                        
+                        // Run frontend container
                         sh """
                         docker run -d \
                             -p ${FRONTEND_PORT}:3000 \
                             --name ${FRONTEND_CONTAINER} \
-                            -e VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                            --network ${DOCKER_NETWORK} \
+                            -e VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
