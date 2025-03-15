@@ -16,6 +16,35 @@ pipeline {
     }
     
     stages {
+        stage('Cleanup') {
+            steps {
+                echo "Cleaning up disk space before build..."
+                // Remove old docker images to free up space
+                sh '''
+                    # Remove dangling images (untagged images)
+                    docker image prune -f
+                    
+                    # Remove unused volumes
+                    docker volume prune -f
+                    
+                    # Remove exited containers
+                    docker container prune -f
+                    
+                    # Clear npm cache
+                    npm cache clean --force || true
+                    
+                    # Clean up temp files
+                    rm -rf /tmp/npm-* || true
+                    
+                    # Clean Jenkins workspace except for critical files
+                    find . -name "node_modules" -type d -prune -exec rm -rf {} + || true
+                    
+                    # Report disk space
+                    df -h
+                '''
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 checkout scm
