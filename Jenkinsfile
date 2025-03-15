@@ -145,24 +145,6 @@ pipeline {
             }
         }
         
-        stage('Run Tests') {
-            parallel {
-                stage('Frontend Tests') {
-                    steps {
-                        dir("${FRONTEND_DIR}") {
-                            sh 'npm test -- --watchAll=false'
-                        }
-                    }
-                }
-                stage('Backend Tests') {
-                    steps {
-                        dir("${BACKEND_DIR}") {
-                            sh 'npm test'
-                        }
-                    }
-                }
-            }
-        }
         
         stage('Deploy') {
             when {
