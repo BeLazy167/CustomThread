@@ -12,6 +12,8 @@ pipeline {
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
         FRONTEND_PORT = "3000"
         BACKEND_PORT = "3001"
+        // Add server hostname environment variable
+        SERVER_HOSTNAME = sh(script: 'curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo "localhost"', returnStdout: true).trim()
     }
     
     stages {
@@ -19,6 +21,7 @@ pipeline {
             steps {
                 checkout scm
                 echo "Building branch: ${env.BRANCH_NAME} for ${DEPLOY_ENV} environment"
+                echo "Server hostname: ${SERVER_HOSTNAME}"
             }
         }
         
@@ -43,7 +46,7 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://localhost:${BACKEND_PORT}
+                            VITE_API_URL=http://${SERVER_HOSTNAME}:${BACKEND_PORT}
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -52,7 +55,8 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
+                            MONGODB_DB_NAME=CustomThreads
+                            CORS_ORIGIN=http://${SERVER_HOSTNAME}:${FRONTEND_PORT}
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -81,7 +85,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \
-                            --build-arg VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                            --build-arg VITE_API_URL=http://${SERVER_HOSTNAME}:${BACKEND_PORT} \
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
@@ -117,7 +121,8 @@ pipeline {
                             --build-arg NODE_ENV=${DEPLOY_ENV} \
                             --build-arg PORT=3001 \
                             --build-arg MONGODB_URI=${MONGODB_URI} \
-                            --build-arg CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                            --build-arg MONGODB_DB_NAME=CustomThreads \
+                            --build-arg CORS_ORIGIN=http://${SERVER_HOSTNAME}:${FRONTEND_PORT} \
                             --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
@@ -165,7 +170,8 @@ pipeline {
                             -e NODE_ENV=${DEPLOY_ENV} \
                             -e PORT=3001 \
                             -e MONGODB_URI=${MONGODB_URI} \
-                            -e CORS_ORIGIN=http://localhost:${FRONTEND_PORT} \
+                            -e MONGODB_DB_NAME=CustomThreads \
+                            -e CORS_ORIGIN=http://${SERVER_HOSTNAME}:${FRONTEND_PORT} \
                             -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
@@ -182,7 +188,7 @@ pipeline {
                         docker run -d \
                             -p ${FRONTEND_PORT}:3000 \
                             --name ${FRONTEND_CONTAINER} \
-                            -e VITE_API_URL=http://localhost:${BACKEND_PORT} \
+                            -e VITE_API_URL=http://${SERVER_HOSTNAME}:${BACKEND_PORT} \
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
@@ -194,6 +200,8 @@ pipeline {
                     }
                     
                     echo "Deployed to ${DEPLOY_ENV} environment"
+                    echo "Frontend available at: http://${SERVER_HOSTNAME}:${FRONTEND_PORT}"
+                    echo "Backend API available at: http://${SERVER_HOSTNAME}:${BACKEND_PORT}"
                 }
             }
         }
