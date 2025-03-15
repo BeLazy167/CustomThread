@@ -93,7 +93,7 @@ pipeline {
                     // Copy the environment-specific .env file
                     sh "cp .env.${DEPLOY_ENV} .env"
                     
-                    sh 'npm ci'
+                    sh 'npm i'
                     sh 'npm run build'
                     
                     // Build Docker image with environment variables
@@ -119,7 +119,7 @@ pipeline {
                     // Copy the environment-specific .env file
                     sh "cp .env.${DEPLOY_ENV} .env"
                     
-                    sh 'npm ci'
+                    sh 'npm i'
                     sh 'npm run build'
                     
                     // Build Docker image with environment variables
