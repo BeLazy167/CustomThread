@@ -46,7 +46,7 @@ RUN mkdir -p /usr/share/nginx/html/assets
 # Copy assets from the build stage
 COPY --from=build /app/public/assets /usr/share/nginx/html/assets
 
-# Copy a custom Nginx configuration to set it to listen on port 3000
+# Copy a custom Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create a script to replace environment variables at runtime
