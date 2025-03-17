@@ -10,7 +10,7 @@ pipeline {
         BACKEND_IMAGE = "custom-thread-backend-${DEPLOY_ENV}"
         FRONTEND_CONTAINER = "frontend-${DEPLOY_ENV}"
         BACKEND_CONTAINER = "backend-${DEPLOY_ENV}"
-        FRONTEND_PORT = "3000"
+        FRONTEND_PORT = "3002"
         BACKEND_PORT = "3001"
         DOCKER_NETWORK = "customthread-network-${DEPLOY_ENV}"
     }
