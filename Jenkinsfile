@@ -5,7 +5,7 @@ pipeline {
         FRONTEND_DIR = "custom-thread-frontend"
         BACKEND_DIR = "custom-thread-backend"
         BRANCH_NAME = "main"
-        DEPLOY_ENV = "${env.BRANCH_NAME == 'main' ? 'production' : (env.BRANCH_NAME == 'qa' ? 'qa' : 'development')}"
+        DEPLOY_ENV = "${env.BRANCH_NAME == 'main' ? 'qa' : (env.BRANCH_NAME == 'qa' ? 'qa' : 'development')}"
         FRONTEND_IMAGE = "custom-thread-frontend-${DEPLOY_ENV}"
         BACKEND_IMAGE = "custom-thread-backend-${DEPLOY_ENV}"
         FRONTEND_CONTAINER = "frontend-${DEPLOY_ENV}"
