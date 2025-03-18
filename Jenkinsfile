@@ -82,7 +82,7 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000
+                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT}
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -147,7 +147,7 @@ pipeline {
                             --build-arg NODE_ENV=${DEPLOY_ENV} \
                             --build-arg PORT=3001 \
                             --build-arg MONGODB_URI=${MONGODB_URI} \
-                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000 \
+                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \
                             --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
@@ -202,7 +202,7 @@ pipeline {
                             -e NODE_ENV=${DEPLOY_ENV} \
                             -e PORT=3001 \
                             -e MONGODB_URI=${MONGODB_URI} \
-                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000 \
+                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \
                             -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
                             -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
