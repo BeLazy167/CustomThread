@@ -15,6 +15,14 @@ import orderRoutes from './routes/v1/order.routes';
 // Create Express app
 const app = express();
 
+// CORS configuration - Apply first
+const corsOptions = {
+    origin: '*', // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
 // Connect to MongoDB
 mongoose
     .connect(appConfig.database.url)
@@ -28,36 +36,19 @@ mongoose
         process.exit(1);
     });
 
-// Enable CORS for all routes
-app.use(cors(appConfig.cors));
-
-// Handle CORS errors
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (err.message === 'Not allowed by CORS') {
-        logger.warn('CORS error', {
-            origin: req.headers.origin,
-            method: req.method,
-            url: req.originalUrl,
-        });
-        return res.status(403).json({
-            message: 'CORS error: Origin not allowed',
-            allowedOrigins: process.env.CORS_ORIGIN?.split(',').map((origin) => origin.trim()),
-        });
-    }
-    next(err);
-});
-
-// Other middleware
+// Apply middleware
+app.use(cors(corsOptions));
+app.use(express.json());
 app.use(
     helmet({
-        crossOriginResourcePolicy: { policy: 'cross-origin' },
-        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+        crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin resource sharing
+        crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Allow cross-origin window.opener access
     })
 );
+app.use(morgan('dev'));
 app.use(compression());
 
 // Setup request logging
-app.use(morgan('combined', { stream }));
 app.use(requestLogger);
 
 // Parse JSON bodies for all routes except the Stripe webhook
@@ -71,7 +62,7 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Pre-flight requests
-app.options('*', cors(appConfig.cors));
+app.options('*', cors(corsOptions));
 
 // Log API version and environment on startup
 logger.info('API Configuration', {
@@ -79,7 +70,7 @@ logger.info('API Configuration', {
     environment: appConfig.env,
     cors: {
         origins: process.env.CORS_ORIGIN?.split(',').map((origin) => origin.trim()),
-        methods: appConfig.cors.methods,
+        methods: corsOptions.methods,
     },
 });
 

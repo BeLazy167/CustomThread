@@ -200,6 +200,8 @@ export const designApi = {
     getRandomDesigns: async (limit: number = 3) =>
         api.get("/designs/random", { limit }),
     getDesigns: async (params: QueryParams = {}) => api.get("/designs", params),
+    getUserDesigns: async (userId: string, params: QueryParams = {}) =>
+        api.get(`/designs/user/${userId}`, params),
     getDesignById: async (id: string) => api.get(`/designs/${id}`),
     searchDesigns: async (query: string, params: QueryParams = {}) =>
         api.get("/designs/search", { q: query, ...params }),

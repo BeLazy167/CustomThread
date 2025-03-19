@@ -46,15 +46,14 @@ import {
     Mail,
     Edit,
     ShoppingBag,
-    Share2,
     Award,
     Briefcase,
     Heart,
     Eye,
     MessageSquare,
-    Globe,
 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
+import { useUserDesigns } from "../../hooks/use-user-designs";
 
 // Define types for user data
 interface UserData {
@@ -89,42 +88,19 @@ const pieData = [
 
 const COLORS = ["#8b5cf6", "#d946ef", "#ec4899", "#6366f1"];
 
-// Recent designs data
-const recentDesigns = [
-    {
-        id: 1,
-        name: "Summer Collection - Tee",
-        thumbnail: "/api/placeholder/300/180",
-        type: "T-shirt",
-        views: 245,
-        likes: 56,
-        comments: 12,
-    },
-    {
-        id: 2,
-        name: "Urban Street Hoodie",
-        thumbnail: "/api/placeholder/300/180",
-        type: "Hoodie",
-        views: 189,
-        likes: 43,
-        comments: 8,
-    },
-    {
-        id: 3,
-        name: "Minimalist Cap Design",
-        thumbnail: "/api/placeholder/300/180",
-        type: "Cap",
-        views: 132,
-        likes: 37,
-        comments: 5,
-    },
-];
-
 export default function ProfilePage() {
     const { user, isLoaded } = useUser();
     const [activeTab, setActiveTab] = useState("analytics");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+    const {
+        designs,
+        loading: designsLoading,
+        error: designsError,
+        pagination,
+        fetchNextPage,
+        fetchPreviousPage,
+    } = useUserDesigns();
 
     // Initialize with default user data
     const initialUserData: UserData = {
@@ -156,7 +132,7 @@ export default function ProfilePage() {
             const updatedData = {
                 ...userData,
                 name: user.fullName || "User",
-                username: `@${user.username || "designer"}`,
+                username: `${user.username || "designer"}`,
                 email: user.primaryEmailAddress?.emailAddress || "",
                 memberSince: user.createdAt
                     ? new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -194,8 +170,7 @@ export default function ProfilePage() {
         try {
             if (user) {
                 await user.update({
-                    firstName: editData.name.split(" ")[0],
-                    lastName: editData.name.split(" ").slice(1).join(" "),
+                    username: editData.username,
                     unsafeMetadata: {
                         bio: editData.bio,
                         location: editData.location,
@@ -260,51 +235,16 @@ export default function ProfilePage() {
                         <div className="flex-1 text-center md:text-left">
                             <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
                                 <h1 className="text-4xl font-bold text-white dark:text-white">
-                                    {userData.name}
+                                    @{userData.username}
                                 </h1>
                                 <Badge className="self-center md:self-auto bg-white/20 text-white border-white/30 backdrop-blur-sm dark:bg-white/10 dark:border-white/20">
                                     Premium Designer
                                 </Badge>
                             </div>
-                            <p className="text-white/80 dark:text-white/70 text-lg">
-                                {userData.username}
-                            </p>
+
                             <p className="mt-3 max-w-xl text-white/90 dark:text-white/80">
                                 {userData.bio}
                             </p>
-                            <div className="flex flex-wrap gap-4 mt-4 justify-center md:justify-start">
-                                <div className="flex items-center gap-2 text-white/90">
-                                    <Users className="h-4 w-4" />
-                                    <span className="font-medium">
-                                        {userData.followers.toLocaleString()}
-                                    </span>
-                                    <span className="text-white/70">
-                                        Followers
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-white/90">
-                                    <Heart className="h-4 w-4" />
-                                    <span className="font-medium">
-                                        {userData.following.toLocaleString()}
-                                    </span>
-                                    <span className="text-white/70">
-                                        Following
-                                    </span>
-                                </div>
-                                {userData.website && (
-                                    <div className="flex items-center gap-2 text-white/90">
-                                        <Globe className="h-4 w-4" />
-                                        <a
-                                            href={"https://" + userData.website}
-                                            className="hover:underline"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            {userData.website}
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
                         </div>
 
                         {/* Action Buttons */}
@@ -333,17 +273,17 @@ export default function ProfilePage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label
-                                                    htmlFor="name"
+                                                    htmlFor="username"
                                                     className="text-sm font-medium dark:text-slate-200"
                                                 >
-                                                    Name
+                                                    Username
                                                 </Label>
                                                 <Input
-                                                    id="name"
-                                                    name="name"
-                                                    value={editData.name}
+                                                    id="username"
+                                                    name="username"
+                                                    value={editData.username}
                                                     onChange={handleInputChange}
-                                                    placeholder="Enter your name"
+                                                    placeholder="Enter your username"
                                                     className="focus-visible:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                 />
                                             </div>
@@ -475,13 +415,6 @@ export default function ProfilePage() {
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
-                            <Button
-                                variant="secondary"
-                                className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20 hover:text-white transition-colors"
-                            >
-                                <Share2 className="h-4 w-4" />
-                                Share Profile
-                            </Button>
                         </div>
                     </div>
                 </div>
@@ -932,67 +865,118 @@ export default function ProfilePage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {recentDesigns.length > 0 ? (
+                                {designsLoading ? (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {recentDesigns.map((design, index) => (
-                                            <motion.div
-                                                key={design.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{
-                                                    delay: index * 0.1,
-                                                }}
-                                            >
-                                                <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px] dark:bg-slate-800">
-                                                    <div className="relative h-48 bg-slate-100 dark:bg-slate-700">
-                                                        <div className="absolute top-2 right-2">
-                                                            <Badge className="bg-white/80 backdrop-blur-sm text-slate-800 hover:bg-white dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-900">
-                                                                {design.type}
-                                                            </Badge>
-                                                        </div>
-                                                        <img
-                                                            src={
-                                                                design.thumbnail
-                                                            }
-                                                            alt={design.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-                                                    <CardContent className="p-4">
-                                                        <h3 className="font-medium text-lg mb-2 dark:text-white">
-                                                            {design.name}
-                                                        </h3>
-                                                        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                                            <div className="flex items-center gap-1">
-                                                                <Eye className="h-4 w-4" />
-                                                                <span>
-                                                                    {
-                                                                        design.views
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <Heart className="h-4 w-4" />
-                                                                <span>
-                                                                    {
-                                                                        design.likes
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <MessageSquare className="h-4 w-4" />
-                                                                <span>
-                                                                    {
-                                                                        design.comments
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            </motion.div>
+                                        {[1, 2, 3].map((i) => (
+                                            <Skeleton
+                                                key={i}
+                                                className="h-[300px] rounded-lg"
+                                            />
                                         ))}
                                     </div>
+                                ) : designsError ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-red-500 dark:text-red-400">
+                                            Error loading designs:{" "}
+                                            {designsError.message}
+                                        </p>
+                                    </div>
+                                ) : designs.length > 0 ? (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {designs.map((design, index) => (
+                                                <motion.div
+                                                    key={design.id}
+                                                    initial={{
+                                                        opacity: 0,
+                                                        y: 20,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        y: 0,
+                                                    }}
+                                                    transition={{
+                                                        delay: index * 0.1,
+                                                    }}
+                                                >
+                                                    <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px] dark:bg-slate-800">
+                                                        <div className="relative h-48 bg-slate-100 dark:bg-slate-700">
+                                                            <div className="absolute top-2 right-2">
+                                                                <Badge className="bg-white/80 backdrop-blur-sm text-slate-800 hover:bg-white dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-900">
+                                                                    {
+                                                                        design.status
+                                                                    }
+                                                                </Badge>
+                                                            </div>
+                                                            <img
+                                                                src={
+                                                                    design.image
+                                                                }
+                                                                alt={
+                                                                    design.title
+                                                                }
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <CardContent className="p-4">
+                                                            <h3 className="font-medium text-lg mb-2 dark:text-white">
+                                                                {design.title}
+                                                            </h3>
+                                                            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Eye className="h-4 w-4" />
+                                                                    <span>
+                                                                        {
+                                                                            design.views
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Heart className="h-4 w-4" />
+                                                                    <span>
+                                                                        {
+                                                                            design.likes
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <MessageSquare className="h-4 w-4" />
+                                                                    <span>
+                                                                        {
+                                                                            design.comments
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {pagination.totalPages > 1 && (
+                                            <div className="flex justify-center gap-2 mt-6">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={fetchPreviousPage}
+                                                    disabled={
+                                                        pagination.page === 1
+                                                    }
+                                                >
+                                                    Previous
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={fetchNextPage}
+                                                    disabled={
+                                                        pagination.page ===
+                                                        pagination.totalPages
+                                                    }
+                                                >
+                                                    Next
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="text-center py-12">
                                         <h3 className="text-lg font-medium mb-2 dark:text-white">
