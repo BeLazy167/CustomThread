@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     environment {
         FRONTEND_DIR = "custom-thread-frontend"
         BACKEND_DIR = "custom-thread-backend"
@@ -13,45 +13,32 @@ pipeline {
         FRONTEND_PORT = "3002"
         BACKEND_PORT = "3001"
         DOCKER_NETWORK = "customthread-network-${DEPLOY_ENV}"
+        BACKEND_URL = "${BACKEND_CONTAINER}:3001"  
     }
-    
+
     stages {
         stage('Cleanup') {
             steps {
                 echo "Cleaning up disk space before build..."
-                // Remove old docker images to free up space
                 sh '''
-                    # Remove dangling images (untagged images)
                     docker image prune -f
-                    
-                    # Remove unused volumes
                     docker volume prune -f
-                    
-                    # Remove exited containers
                     docker container prune -f
-                    
-                    # Clear npm cache
                     npm cache clean --force || true
-                    
-                    # Clean up temp files
                     rm -rf /tmp/npm-* || true
-                    
-                    # Clean Jenkins workspace except for critical files
                     find . -name "node_modules" -type d -prune -exec rm -rf {} + || true
-                    
-                    # Report disk space
                     df -h
                 '''
             }
         }
-        
+
         stage('Checkout') {
             steps {
                 checkout scm
                 echo "Building branch: ${env.BRANCH_NAME} for ${DEPLOY_ENV} environment"
             }
         }
-        
+
         stage('Generate Environment Files') {
             steps {
                 withCredentials([
@@ -73,11 +60,11 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://${BACKEND_CONTAINER}:3001
+                            VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
-                        
+
                         writeFile file: "${BACKEND_DIR}/.env.${DEPLOY_ENV}", text: """
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
@@ -96,7 +83,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Frontend Build') {
             steps {
                 dir("${FRONTEND_DIR}") {
@@ -111,7 +98,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \
-                            --build-arg VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \
+                            --build-arg VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
@@ -124,7 +111,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Backend Build') {
             steps {
                 dir("${BACKEND_DIR}") {
@@ -163,27 +150,26 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy') {
             when {
-                expression { 
+                expression {
                     return env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'dev'
                 }
             }
             steps {
                 script {
-                    // Clean up existing containers and networks
                     sh "docker stop ${FRONTEND_CONTAINER} || true"
                     sh "docker rm ${FRONTEND_CONTAINER} || true"
                     sh "docker stop ${BACKEND_CONTAINER} || true"
                     sh "docker rm ${BACKEND_CONTAINER} || true"
                     sh "docker network rm ${DOCKER_NETWORK} || true"
-                    
-                    // Create Docker network
+
                     sh "docker network create ${DOCKER_NETWORK} || true"
-                    
+
                     withCredentials([
                         string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI'),
+                        string(credentialsId: 'cloudinary-url', variable: 'CLOUDINARY_URL'),
                         string(credentialsId: 'cloudinary-cloud-name', variable: 'CLOUDINARY_CLOUD_NAME'),
                         string(credentialsId: 'cloudinary-api-key', variable: 'CLOUDINARY_API_KEY'),
                         string(credentialsId: 'cloudinary-api-secret', variable: 'CLOUDINARY_API_SECRET'),
@@ -193,7 +179,6 @@ pipeline {
                         string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
-                        // Run backend container
                         sh """
                         docker run -d \
                             -p ${BACKEND_PORT}:3001 \
@@ -214,17 +199,15 @@ pipeline {
                             --restart unless-stopped \
                             ${BACKEND_IMAGE}:latest
                         """
-                        
-                        // Wait for backend to fully start
+
                         sh "sleep 10"
-                        
-                        // Run frontend container
+
                         sh """
                         docker run -d \
                             -p ${FRONTEND_PORT}:3000 \
                             --name ${FRONTEND_CONTAINER} \
                             --network ${DOCKER_NETWORK} \
-                            -e VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \
+                            -e VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
                             -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
@@ -234,22 +217,22 @@ pipeline {
                             ${FRONTEND_IMAGE}:latest
                         """
                     }
-                    
+
                     echo "Deployed to ${DEPLOY_ENV} environment"
                 }
             }
         }
     }
-    
+
     post {
         success {
-            slackSend channel: 'team4', 
-                      color: 'good', 
+            slackSend channel: 'team4',
+                      color: 'good',
                       message: "✅ Build Successful for ${DEPLOY_ENV}! Frontend: ${FRONTEND_IMAGE}:${BUILD_NUMBER}, Backend: ${BACKEND_IMAGE}:${BUILD_NUMBER}"
         }
         failure {
-            slackSend channel: 'team4', 
-                      color: 'danger', 
+            slackSend channel: 'team4',
+                      color: 'danger',
                       message: "❌ Build Failed for ${DEPLOY_ENV}!"
         }
         unstable {
