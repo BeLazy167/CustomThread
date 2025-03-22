@@ -5,7 +5,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import { appConfig } from './config/app.config';
-import { logger, stream } from './config/logger';
+import { logger } from './config/logger';
 import { requestLogger } from './middleware/request-logger.middleware';
 
 // Import routes
@@ -79,7 +79,7 @@ app.use(`${appConfig.apiPrefix}/designs`, designRoutes);
 app.use(`${appConfig.apiPrefix}/orders`, orderRoutes);
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response) => {
     logger.error('Error:', { error: err.message, stack: err.stack });
     res.status(500).json({
         message: 'Internal Server Error',

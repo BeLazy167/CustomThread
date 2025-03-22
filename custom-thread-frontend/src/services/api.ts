@@ -85,7 +85,8 @@ interface Order {
     updatedAt: string;
 }
 
-const API_URL = "http://localhost:3001/api/v1";
+const API_URL_WITHOUT_API = import.meta.env.VITE_API_URL;
+const API_URL = API_URL_WITHOUT_API + "/api/v1";
 
 // Get the Clerk token
 const getClerkToken = async (): Promise<string | null> => {
