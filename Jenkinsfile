@@ -53,7 +53,6 @@ pipeline {
                     string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                 ]) {
                     script {
-                        // For frontend, we'll use the backend container name directly
                         writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
                             VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
                             VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
@@ -206,11 +205,12 @@ pipeline {
                         // Wait for backend to start
                         sh "sleep 10"
                         
-                        // Get backend container IP address for more reliable connection
+                        // Get backend IP and deploy frontend
                         sh """
+                        # Get backend IP
                         BACKEND_IP=\$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${BACKEND_CONTAINER})
                         
-                        # Start frontend container with backend IP
+                        # Deploy frontend
                         docker run -d \\
                             -p ${FRONTEND_PORT}:3000 \\
                             --name ${FRONTEND_CONTAINER} \\
@@ -225,20 +225,30 @@ pipeline {
                             ${FRONTEND_IMAGE}:latest
                         """
                         
+                        // Debug information
+                        sh """
                         echo "Network information:"
                         docker network inspect ${DOCKER_NETWORK}
+                        """
                         
+                        sh """
                         echo "Container connectivity test:"
                         docker exec ${FRONTEND_CONTAINER} ping -c 2 ${BACKEND_CONTAINER} || true
+                        """
                         
+                        sh """
                         echo "Frontend environment variables:"
-                        docker exec ${FRONTEND_CONTAINER} env | grep VITE || true
+                        docker exec ${FRONTEND_CONTAINER} printenv | grep VITE || true
+                        """
                         
+                        sh """
                         echo "Backend logs:"
-                        docker logs ${BACKEND_CONTAINER} | tail -n 20
+                        docker logs ${BACKEND_CONTAINER} | tail -n 20 || true
+                        """
                         
+                        sh """
                         echo "Frontend logs:"
-                        docker logs ${FRONTEND_CONTAINER} | tail -n 20
+                        docker logs ${FRONTEND_CONTAINER} | tail -n 20 || true
                         """
                     }
 
