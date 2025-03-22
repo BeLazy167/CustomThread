@@ -13,7 +13,6 @@ pipeline {
         FRONTEND_PORT = "3002"
         BACKEND_PORT = "3001"
         DOCKER_NETWORK = "customthread-network-${DEPLOY_ENV}"
-        BACKEND_URL = "${BACKEND_CONTAINER}:3001"  
     }
 
     stages {
@@ -54,13 +53,14 @@ pipeline {
                     string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                 ]) {
                     script {
+                        // For frontend, we'll use the backend container name directly
                         writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
                             VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
                             VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://${BACKEND_URL}
+                            VITE_API_URL=http://${BACKEND_CONTAINER}:3001
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -98,7 +98,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \\
-                            --build-arg VITE_API_URL=http://${BACKEND_URL} \\
+                            --build-arg VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \\
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
@@ -159,12 +159,14 @@ pipeline {
             }
             steps {
                 script {
+                    // Stop and remove existing containers
                     sh "docker stop ${FRONTEND_CONTAINER} || true"
                     sh "docker rm ${FRONTEND_CONTAINER} || true"
                     sh "docker stop ${BACKEND_CONTAINER} || true"
                     sh "docker rm ${BACKEND_CONTAINER} || true"
+                    
+                    // Remove and recreate network
                     sh "docker network rm ${DOCKER_NETWORK} || true"
-
                     sh "docker network create ${DOCKER_NETWORK} || true"
 
                     withCredentials([
@@ -179,6 +181,7 @@ pipeline {
                         string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
+                        // Start backend container first
                         sh """
                         docker run -d \\
                             -p ${BACKEND_PORT}:3001 \\
@@ -200,14 +203,19 @@ pipeline {
                             ${BACKEND_IMAGE}:latest
                         """
 
+                        // Wait for backend to start
                         sh "sleep 10"
-
+                        
+                        // Get backend container IP address for more reliable connection
                         sh """
+                        BACKEND_IP=\$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${BACKEND_CONTAINER})
+                        
+                        # Start frontend container with backend IP
                         docker run -d \\
                             -p ${FRONTEND_PORT}:3000 \\
                             --name ${FRONTEND_CONTAINER} \\
                             --network ${DOCKER_NETWORK} \\
-                            -e VITE_API_URL=http://${BACKEND_URL} \\
+                            -e VITE_API_URL=http://\${BACKEND_IP}:3001 \\
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
@@ -215,6 +223,23 @@ pipeline {
                             -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
                             --restart unless-stopped \\
                             ${FRONTEND_IMAGE}:latest
+                        """
+                        
+                        # Add debugging information
+                        echo "Network information:"
+                        docker network inspect ${DOCKER_NETWORK}
+                        
+                        echo "Container connectivity test:"
+                        docker exec ${FRONTEND_CONTAINER} ping -c 2 ${BACKEND_CONTAINER} || true
+                        
+                        echo "Frontend environment variables:"
+                        docker exec ${FRONTEND_CONTAINER} env | grep VITE || true
+                        
+                        echo "Backend logs:"
+                        docker logs ${BACKEND_CONTAINER} | tail -n 20
+                        
+                        echo "Frontend logs:"
+                        docker logs ${FRONTEND_CONTAINER} | tail -n 20
                         """
                     }
 
