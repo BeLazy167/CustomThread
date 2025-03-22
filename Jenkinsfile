@@ -225,7 +225,6 @@ pipeline {
                             ${FRONTEND_IMAGE}:latest
                         """
                         
-                        # Add debugging information
                         echo "Network information:"
                         docker network inspect ${DOCKER_NETWORK}
                         
