@@ -60,7 +60,7 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
+                            VITE_API_URL=http://${BACKEND_URL}
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -97,13 +97,13 @@ pipeline {
                         sh 'npm i'
                         sh 'npm run build'
                         sh """
-                        docker build \
-                            --build-arg VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
-                            --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \
-                            --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                            --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                            --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                            --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
+                        docker build \\
+                            --build-arg VITE_API_URL=http://${BACKEND_URL} \\
+                            --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \\
+                            --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
+                            --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
+                            --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
+                            --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
                             -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
                         """
                         sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
@@ -130,19 +130,19 @@ pipeline {
                         sh 'npm i'
                         sh 'npm run build'
                         sh """
-                        docker build \
-                            --build-arg NODE_ENV=${DEPLOY_ENV} \
-                            --build-arg PORT=3001 \
-                            --build-arg MONGODB_URI=${MONGODB_URI} \
-                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \
-                            --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                            --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                            --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
-                            --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
-                            --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                            --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
-                            --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                            --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
+                        docker build \\
+                            --build-arg NODE_ENV=${DEPLOY_ENV} \\
+                            --build-arg PORT=3001 \\
+                            --build-arg MONGODB_URI=${MONGODB_URI} \\
+                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \\
+                            --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
+                            --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
+                            --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \\
+                            --build-arg CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \\
+                            --build-arg CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
+                            --build-arg STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \\
+                            --build-arg STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
+                            --build-arg WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \\
                             -t ${BACKEND_IMAGE}:${BUILD_NUMBER} .
                         """
                         sh "docker tag ${BACKEND_IMAGE}:${BUILD_NUMBER} ${BACKEND_IMAGE}:latest"
@@ -180,40 +180,40 @@ pipeline {
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
                         sh """
-                        docker run -d \
-                            -p ${BACKEND_PORT}:3001 \
-                            --name ${BACKEND_CONTAINER} \
-                            --network ${DOCKER_NETWORK} \
-                            -e NODE_ENV=${DEPLOY_ENV} \
-                            -e PORT=3001 \
-                            -e MONGODB_URI=${MONGODB_URI} \
-                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \
-                            -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                            -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                            -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \
-                            -e CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \
-                            -e CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                            -e STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \
-                            -e STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                            -e WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \
-                            --restart unless-stopped \
+                        docker run -d \\
+                            -p ${BACKEND_PORT}:3001 \\
+                            --name ${BACKEND_CONTAINER} \\
+                            --network ${DOCKER_NETWORK} \\
+                            -e NODE_ENV=${DEPLOY_ENV} \\
+                            -e PORT=3001 \\
+                            -e MONGODB_URI=${MONGODB_URI} \\
+                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \\
+                            -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
+                            -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
+                            -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \\
+                            -e CLERK_SECRET_KEY=${CLERK_SECRET_KEY} \\
+                            -e CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
+                            -e STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY} \\
+                            -e STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
+                            -e WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET} \\
+                            --restart unless-stopped \\
                             ${BACKEND_IMAGE}:latest
                         """
 
                         sh "sleep 10"
 
                         sh """
-                        docker run -d \
-                            -p ${FRONTEND_PORT}:3000 \
-                            --name ${FRONTEND_CONTAINER} \
-                            --network ${DOCKER_NETWORK} \
-                            -e VITE_API_URL=http://${BACKEND_URL}  // <--- KEY CHANGE
-                            -e VITE_ENVIRONMENT=${DEPLOY_ENV} \
-                            -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \
-                            -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \
-                            -e VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \
-                            -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \
-                            --restart unless-stopped \
+                        docker run -d \\
+                            -p ${FRONTEND_PORT}:3000 \\
+                            --name ${FRONTEND_CONTAINER} \\
+                            --network ${DOCKER_NETWORK} \\
+                            -e VITE_API_URL=http://${BACKEND_URL} \\
+                            -e VITE_ENVIRONMENT=${DEPLOY_ENV} \\
+                            -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
+                            -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
+                            -e VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
+                            -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
+                            --restart unless-stopped \\
                             ${FRONTEND_IMAGE}:latest
                         """
                     }
