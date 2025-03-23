@@ -59,7 +59,7 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=http://${BACKEND_CONTAINER}:3001
+                            VITE_API_URL=/api/
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -68,7 +68,7 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:${FRONTEND_PORT}
+                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT}
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -97,7 +97,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \\
-                            --build-arg VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \\
+                            --build-arg VITE_API_URL=/api/ \\
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
@@ -163,7 +163,7 @@ pipeline {
                     sh "docker rm ${FRONTEND_CONTAINER} || true"
                     sh "docker stop ${BACKEND_CONTAINER} || true"
                     sh "docker rm ${BACKEND_CONTAINER} || true"
-                    
+
                     // Remove and recreate network
                     sh "docker network rm ${DOCKER_NETWORK} || true"
                     sh "docker network create ${DOCKER_NETWORK} || true"
@@ -180,7 +180,7 @@ pipeline {
                         string(credentialsId: 'stripe-publishable-key', variable: 'STRIPE_PUBLISHABLE_KEY'),
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
-                        // Start backend container first
+                        // Start backend container
                         sh """
                         docker run -d \\
                             -p ${BACKEND_PORT}:3001 \\
@@ -204,55 +204,21 @@ pipeline {
 
                         // Wait for backend to start
                         sh "sleep 10"
-                        
-                        // Get backend IP and deploy frontend
+
+                        // Start frontend container
                         sh """
-                        # Get backend IP
-                        BACKEND_IP=\$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${BACKEND_CONTAINER})
-                        
-                        # Deploy frontend
                         docker run -d \\
                             -p ${FRONTEND_PORT}:3000 \\
                             --name ${FRONTEND_CONTAINER} \\
                             --network ${DOCKER_NETWORK} \\
-                            -e VITE_API_URL=http://\${BACKEND_IP}:3001 \\
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
-                            -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
                             -e VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
                             -e VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
                             --restart unless-stopped \\
                             ${FRONTEND_IMAGE}:latest
                         """
-                        
-                        // Debug information
-                        sh """
-                        echo "Network information:"
-                        docker network inspect ${DOCKER_NETWORK}
-                        """
-                        
-                        sh """
-                        echo "Container connectivity test:"
-                        docker exec ${FRONTEND_CONTAINER} ping -c 2 ${BACKEND_CONTAINER} || true
-                        """
-                        
-                        sh """
-                        echo "Frontend environment variables:"
-                        docker exec ${FRONTEND_CONTAINER} printenv | grep VITE || true
-                        """
-                        
-                        sh """
-                        echo "Backend logs:"
-                        docker logs ${BACKEND_CONTAINER} | tail -n 20 || true
-                        """
-                        
-                        sh """
-                        echo "Frontend logs:"
-                        docker logs ${FRONTEND_CONTAINER} | tail -n 20 || true
-                        """
                     }
-
-                    echo "Deployed to ${DEPLOY_ENV} environment"
                 }
             }
         }
