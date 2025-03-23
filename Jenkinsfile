@@ -68,7 +68,7 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT}
+                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:${FRONTEND_PORT}
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
