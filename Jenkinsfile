@@ -13,6 +13,7 @@ pipeline {
         FRONTEND_PORT = "3002"
         BACKEND_PORT = "3001"
         DOCKER_NETWORK = "customthread-network-${DEPLOY_ENV}"
+        BACKEND_API = "https://customthread.onrender.com"
     }
 
     stages {
@@ -59,7 +60,7 @@ pipeline {
                             VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             VITE_CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
                             VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-                            VITE_API_URL=/api/
+                            VITE_API_URL=${BACKEND_API}
                             VITE_ENVIRONMENT=${DEPLOY_ENV}
                             VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                         """
@@ -97,7 +98,7 @@ pipeline {
                         sh 'npm run build'
                         sh """
                         docker build \\
-                            --build-arg VITE_API_URL=/api/ \\
+                            --build-arg VITE_API_URL=${BACKEND_API} \\
                             --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
