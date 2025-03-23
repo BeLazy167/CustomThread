@@ -97,15 +97,15 @@ pipeline {
                         sh 'npm i'
                         sh 'npm run build'
                         sh """
-                        docker build \\
-                            --build-arg VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \\
-                            --build-arg VITE_ENVIRONMENT=${DEPLOY_ENV} \\
-                            --build-arg VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
-                            --build-arg VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
-                            --build-arg VITE_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY} \\
-                            --build-arg VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY} \\
-                            -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
-                        """
+docker build \\
+    --build-arg VITE_API_URL=http://\${BACKEND_CONTAINER}:3001 \\
+    --build-arg VITE_ENVIRONMENT=\${DEPLOY_ENV} \\
+    --build-arg VITE_CLOUDINARY_CLOUD_NAME=\${CLOUDINARY_CLOUD_NAME} \\
+    --build-arg VITE_CLOUDINARY_API_KEY=\${CLOUDINARY_API_KEY} \\
+    --build-arg VITE_CLERK_PUBLISHABLE_KEY=\${CLERK_PUBLISHABLE_KEY} \\
+    --build-arg VITE_STRIPE_PUBLISHABLE_KEY=\${STRIPE_PUBLISHABLE_KEY} \\
+    -t \${FRONTEND_IMAGE}:\${BUILD_NUMBER} .
+"""
                         sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
                         
                         // Update Nginx configuration to use the backend container name
