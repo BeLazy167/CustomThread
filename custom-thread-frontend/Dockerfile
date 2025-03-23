@@ -49,26 +49,9 @@ COPY --from=build /app/public/assets /usr/share/nginx/html/assets
 # Copy a custom Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create a script to replace environment variables at runtime
-RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
-    echo 'set -e' >> /docker-entrypoint.sh && \
-    echo 'envsubst < /usr/share/nginx/html/env-config.js.template > /usr/share/nginx/html/env-config.js' >> /docker-entrypoint.sh && \
-    echo 'exec "$@"' >> /docker-entrypoint.sh && \
-    chmod +x /docker-entrypoint.sh
-
-# Create a template file for runtime environment variables
-RUN echo "window.ENV = {" > /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_API_URL: '${VITE_API_URL}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_ENVIRONMENT: '${VITE_ENVIRONMENT}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_CLOUDINARY_CLOUD_NAME: '${VITE_CLOUDINARY_CLOUD_NAME}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_CLOUDINARY_API_KEY: '${VITE_CLOUDINARY_API_KEY}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_CLERK_PUBLISHABLE_KEY: '${VITE_CLERK_PUBLISHABLE_KEY}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "  VITE_STRIPE_PUBLISHABLE_KEY: '${VITE_STRIPE_PUBLISHABLE_KEY}'," >> /usr/share/nginx/html/env-config.js.template && \
-    echo "};" >> /usr/share/nginx/html/env-config.js.template
-
 # Create cache directories and set permissions
 RUN mkdir -p /var/cache/nginx /var/run \
-    && chown -R nginx:nginx /var/cache/nginx /var/run /usr/share/nginx/html /docker-entrypoint.sh
+    && chown -R nginx:nginx /var/cache/nginx /var/run /usr/share/nginx/html
 
 # Expose port 3000 for React app
 EXPOSE 3000
@@ -76,6 +59,5 @@ EXPOSE 3000
 # Switch to non-root user
 USER nginx
 
-# Start Nginx with the entrypoint script
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
