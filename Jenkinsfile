@@ -53,6 +53,7 @@ pipeline {
                     string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                 ]) {
                     script {
+                        // Generate environment files with correct container naming and network configurations
                         writeFile file: "${FRONTEND_DIR}/.env.${DEPLOY_ENV}", text: """
                             VITE_CLOUDINARY_URL=${CLOUDINARY_URL}
                             VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
@@ -68,7 +69,7 @@ pipeline {
                             NODE_ENV=${DEPLOY_ENV}
                             PORT=3001
                             MONGODB_URI=${MONGODB_URI}
-                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT}
+                            CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT},*
                             CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
                             CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
                             CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -106,6 +107,95 @@ pipeline {
                             -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} .
                         """
                         sh "docker tag ${FRONTEND_IMAGE}:${BUILD_NUMBER} ${FRONTEND_IMAGE}:latest"
+                        
+                        // Update Nginx configuration to use the backend container name
+                        sh """
+                        cat > nginx.conf << 'EOF'
+worker_processes auto;
+pid /tmp/nginx.pid;
+events {
+    worker_connections 1024;
+}
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+    # Gzip compression
+    gzip on;
+    gzip_comp_level 6;
+    gzip_min_length 256;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_types
+        text/plain
+        text/css
+        text/javascript
+        application/javascript
+        application/json
+        application/xml
+        image/svg+xml;
+    # Cache settings
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path /tmp/proxy_temp;
+    fastcgi_temp_path /tmp/fastcgi_temp;
+    uwsgi_temp_path /tmp/uwsgi_temp;
+    scgi_temp_path /tmp/scgi_temp;
+    server {
+        listen 3000;
+        server_name localhost;
+        root /usr/share/nginx/html;
+        index index.html;
+        # Basic security headers
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options SAMEORIGIN;
+        
+        # Static file caching
+        location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
+        }
+        # SPA routing
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+        # Proxy requests to the backend with CORS handling
+        location /api/ {
+            # Using the Docker internal DNS resolver
+            resolver 127.0.0.11 valid=30s;
+            
+            # Use the backend container name from Docker network
+            set $backend_upstream ${BACKEND_CONTAINER};
+            proxy_pass http://$backend_upstream:3001;
+            
+            # Handle CORS preflight requests
+            if ($request_method = 'OPTIONS') {
+                add_header 'Access-Control-Allow-Origin' '*';
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+                add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+                add_header 'Access-Control-Max-Age' 1728000;
+                add_header 'Content-Type' 'text/plain charset=UTF-8';
+                add_header 'Content-Length' 0;
+                return 204;
+            }
+            
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 15s;
+            proxy_read_timeout 30s;
+            
+            # Add CORS headers
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+        }
+    }
+}
+EOF
+                        """
                     }
                 }
             }
@@ -133,7 +223,7 @@ pipeline {
                             --build-arg NODE_ENV=${DEPLOY_ENV} \\
                             --build-arg PORT=3001 \\
                             --build-arg MONGODB_URI=${MONGODB_URI} \\
-                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \\
+                            --build-arg CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT},* \\
                             --build-arg CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             --build-arg CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
                             --build-arg CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \\
@@ -186,10 +276,11 @@ pipeline {
                             -p ${BACKEND_PORT}:3001 \\
                             --name ${BACKEND_CONTAINER} \\
                             --network ${DOCKER_NETWORK} \\
+                            --hostname ${BACKEND_CONTAINER} \\
                             -e NODE_ENV=${DEPLOY_ENV} \\
                             -e PORT=3001 \\
                             -e MONGODB_URI=${MONGODB_URI} \\
-                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT} \\
+                            -e CORS_ORIGIN=http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT},* \\
                             -e CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             -e CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
                             -e CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} \\
@@ -205,17 +296,23 @@ pipeline {
                         // Wait for backend to start
                         sh "sleep 10"
                         
-                        // Get backend IP and deploy frontend
+                        // Get backend IP for host file
                         sh """
                         # Get backend IP
                         BACKEND_IP=\$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${BACKEND_CONTAINER})
+                        echo "Backend container IP: \${BACKEND_IP}"
                         
-                        # Deploy frontend
+                        # Create /etc/hosts entry for the frontend container
+                        echo "\${BACKEND_IP} ${BACKEND_CONTAINER}" > /tmp/backend_hosts
+                        
+                        # Deploy frontend with Docker DNS properly configured
                         docker run -d \\
                             -p ${FRONTEND_PORT}:3000 \\
                             --name ${FRONTEND_CONTAINER} \\
                             --network ${DOCKER_NETWORK} \\
-                            -e VITE_API_URL=http://\${BACKEND_IP}:3001 \\
+                            --hostname ${FRONTEND_CONTAINER} \\
+                            --add-host ${BACKEND_CONTAINER}:\${BACKEND_IP} \\
+                            -e VITE_API_URL=http://${BACKEND_CONTAINER}:3001 \\
                             -e VITE_ENVIRONMENT=${DEPLOY_ENV} \\
                             -e VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME} \\
                             -e VITE_CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} \\
@@ -225,6 +322,24 @@ pipeline {
                             ${FRONTEND_IMAGE}:latest
                         """
                         
+                        // Create an env-config.js file for runtime configuration
+                        sh """
+                        # Create a runtime config file inside the frontend container
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo 'window.ENV = {' > /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_API_URL: \"http://${BACKEND_CONTAINER}:3001\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_ENVIRONMENT: \"${DEPLOY_ENV}\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_CLOUDINARY_CLOUD_NAME: \"${CLOUDINARY_CLOUD_NAME}\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_CLOUDINARY_API_KEY: \"${CLOUDINARY_API_KEY}\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_CLERK_PUBLISHABLE_KEY: \"${CLERK_PUBLISHABLE_KEY}\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '  VITE_STRIPE_PUBLISHABLE_KEY: \"${STRIPE_PUBLISHABLE_KEY}\",' >> /usr/share/nginx/html/env-config.js"
+                        docker exec ${FRONTEND_CONTAINER} sh -c "echo '};' >> /usr/share/nginx/html/env-config.js"
+                        """
+                        
+                        // Add a script tag to include env-config.js in index.html
+                        sh """
+                        docker exec ${FRONTEND_CONTAINER} sh -c "sed -i 's|</head>|<script src=\"/env-config.js\"></script></head>|' /usr/share/nginx/html/index.html"
+                        """
+                        
                         // Debug information
                         sh """
                         echo "Network information:"
@@ -232,13 +347,24 @@ pipeline {
                         """
                         
                         sh """
-                        echo "Container connectivity test:"
+                        echo "Container connectivity test from frontend to backend:"
                         docker exec ${FRONTEND_CONTAINER} ping -c 2 ${BACKEND_CONTAINER} || true
+                        """
+                        
+                        sh """
+                        echo "Verifying DNS resolution from frontend container:"
+                        docker exec ${FRONTEND_CONTAINER} cat /etc/hosts || true
+                        docker exec ${FRONTEND_CONTAINER} nslookup ${BACKEND_CONTAINER} || true
                         """
                         
                         sh """
                         echo "Frontend environment variables:"
                         docker exec ${FRONTEND_CONTAINER} printenv | grep VITE || true
+                        """
+                        
+                        sh """
+                        echo "Frontend env-config.js content:"
+                        docker exec ${FRONTEND_CONTAINER} cat /usr/share/nginx/html/env-config.js || true
                         """
                         
                         sh """
