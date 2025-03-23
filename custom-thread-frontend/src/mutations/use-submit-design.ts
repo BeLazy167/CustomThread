@@ -20,19 +20,9 @@ interface DesignSubmission {
     image: string;
     decal?: string;
 }
-
+import { designApi } from "@/services/api";
 const submitDesign = async (data: DesignSubmission) => {
-    const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/designs`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify(data),
-        }
-    );
+    const response = await designApi.createDesign(data);
 
     if (!response.ok) {
         const error = await response.json();
