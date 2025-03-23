@@ -15,9 +15,15 @@ import orderRoutes from './routes/v1/order.routes';
 // Create Express app
 const app = express();
 
-// CORS configuration - Apply first
+/**
+ * CORS Configuration
+ * - origin: '*' allows requests from any domain (all websites and UIs)
+ * - credentials: true enables cookies and authentication headers
+ * - methods: specifies allowed HTTP methods
+ * - allowedHeaders: specifies which headers can be included in requests
+ */
 const corsOptions = {
-    origin: '*', // Allow all origins
+    origin: appConfig.cors.origin || '*', // Use configured origin from env or fallback to all origins
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -37,21 +43,26 @@ mongoose
     });
 
 // Apply middleware
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); // Apply CORS middleware first to handle preflight requests
 app.use(express.json());
 app.use(
     helmet({
-        crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin resource sharing
+        // Configure helmet for cross-origin resource sharing
+        crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow resources to be shared across origins
         crossOriginOpenerPolicy: { policy: 'unsafe-none' }, // Allow cross-origin window.opener access
     })
 );
-app.use(morgan('dev'));
-app.use(compression());
+app.use(morgan('dev')); // HTTP request logger
+app.use(compression()); // Compress responses to improve performance
 
-// Setup request logging
+// Setup request logging middleware
 app.use(requestLogger);
 
-// Parse JSON bodies for all routes except the Stripe webhook
+/**
+ * Custom middleware to handle JSON parsing
+ * - Skips JSON parsing for Stripe webhook endpoint (which needs raw body)
+ * - Sets a higher limit (50mb) for JSON payloads to handle large requests
+ */
 app.use((req, res, next) => {
     if (req.originalUrl === `${appConfig.apiPrefix}/orders/webhook`) {
         next();
@@ -61,24 +72,43 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Pre-flight requests
+// Handle preflight (OPTIONS) requests for all routes
 app.options('*', cors(corsOptions));
+
+/**
+ * Custom middleware to explicitly set Access-Control-Allow-Origin header
+ * This ensures all responses include this header, allowing any website to access the API
+ * This is a belt-and-suspenders approach in addition to the CORS middleware
+ */
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // Allow requests from any origin
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS'); // Allow all methods
+    res.header(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Requested-With, Accept'
+    ); // Allow common headers
+    next();
+});
 
 // Log API version and environment on startup
 logger.info('API Configuration', {
     version: 'v1',
     environment: appConfig.env,
     cors: {
-        origins: process.env.CORS_ORIGIN?.split(',').map((origin) => origin.trim()),
+        origins: '*', // Logging that we're allowing all origins
         methods: corsOptions.methods,
     },
 });
 
-// API Routes
+// Register API Routes with their respective prefixes
 app.use(`${appConfig.apiPrefix}/designs`, designRoutes);
 app.use(`${appConfig.apiPrefix}/orders`, orderRoutes);
 
-// Error handling middleware
+/**
+ * Global error handling middleware
+ * Catches any errors thrown in routes or middleware and returns a standardized response
+ * In development mode, includes the error message for debugging
+ */
 app.use((err: Error, req: express.Request, res: express.Response) => {
     logger.error('Error:', { error: err.message, stack: err.stack });
     res.status(500).json({
@@ -87,7 +117,10 @@ app.use((err: Error, req: express.Request, res: express.Response) => {
     });
 });
 
-// 404 handler
+/**
+ * 404 handler for unmatched routes
+ * Logs the attempted route and returns a standardized 404 response
+ */
 app.use((req: express.Request, res: express.Response) => {
     logger.warn(`Route not found: ${req.method} ${req.url}`, {
         ip: req.ip,
