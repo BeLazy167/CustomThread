@@ -79,6 +79,29 @@ pipeline {
                             STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
                             WEBHOOK_ENDPOINT_SECRET=${WEBHOOK_ENDPOINT_SECRET}
                         """
+                        
+                        // Generate TypeScript environment config file
+                        writeFile file: "${BACKEND_DIR}/src/config/env.config.ts", text: """
+                            import dotenv from 'dotenv';
+                            
+                            // Load environment variables
+                            dotenv.config();
+                            
+                            export const env = {
+                                NODE_ENV: process.env.NODE_ENV || '${DEPLOY_ENV}',
+                                PORT: parseInt(process.env.PORT || '3001', 10),
+                                MONGODB_URI: process.env.MONGODB_URI || '${MONGODB_URI}',
+                                CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://${FRONTEND_CONTAINER}:3000,http://localhost:${FRONTEND_PORT}',
+                                CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '${CLOUDINARY_CLOUD_NAME}',
+                                CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '${CLOUDINARY_API_KEY}',
+                                CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '${CLOUDINARY_API_SECRET}',
+                                CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY || '${CLERK_SECRET_KEY}',
+                                CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY || '${CLERK_PUBLISHABLE_KEY}',
+                                STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '${STRIPE_SECRET_KEY}',
+                                STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || '${STRIPE_PUBLISHABLE_KEY}',
+                                WEBHOOK_ENDPOINT_SECRET: process.env.WEBHOOK_ENDPOINT_SECRET || '${WEBHOOK_ENDPOINT_SECRET}',
+                            } as const;
+                        """
                     }
                 }
             }
@@ -127,6 +150,10 @@ pipeline {
                         string(credentialsId: 'webhook-endpoint-secret', variable: 'WEBHOOK_ENDPOINT_SECRET')
                     ]) {
                         sh "cp .env.${DEPLOY_ENV} .env"
+                        
+                        // Ensure env.config.ts exists for TypeScript compilation
+                        sh "ls -la src/config/"
+                        
                         sh 'npm i'
                         sh 'npm run build'
                         sh """
