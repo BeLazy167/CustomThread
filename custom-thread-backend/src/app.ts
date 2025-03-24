@@ -23,7 +23,7 @@ const app = express();
  * - allowedHeaders: specifies which headers can be included in requests
  */
 const corsOptions = {
-    origin: appConfig.cors.origin || process.env.CORS_ORIGIN, // Use configured origin from env or fallback to all origins
+    origin: 'http://54.196.229.254:3002', // Use configured origin from env or fallback to all origins
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],

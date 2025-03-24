@@ -10,7 +10,7 @@ if (result.error) {
 
 // Ensure critical environment variables are set
 const checkCriticalEnvVars = () => {
-    const criticalVars = ['MONGODB_URI'];
+    const criticalVars = ['MONGODB_URI', 'CORS_ORIGIN'];
     const missing = criticalVars.filter((varName) => !process.env[varName]);
 
     if (missing.length > 0) {
@@ -37,9 +37,7 @@ const logMongoDbUri = () => {
 
 logMongoDbUri();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-    .split(',')
-    .map((origin) => origin.trim());
+
 
 export const appConfig = {
     env: process.env.NODE_ENV || 'development',
@@ -53,10 +51,15 @@ export const appConfig = {
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) return callback(null, true);
 
-            if (allowedOrigins.indexOf(origin) !== -1) {
-                callback(null, origin);
+            if (process.env.CORS_ORIGIN) {
+                const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+                if (allowedOrigins.indexOf(origin) !== -1) {
+                    callback(null, origin);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
             } else {
-                callback(new Error('Not allowed by CORS'));
+                callback(new Error('CORS_ORIGIN is not set in environment variables.'));
             }
         },
         credentials: true,
