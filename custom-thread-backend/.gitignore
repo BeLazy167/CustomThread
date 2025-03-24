@@ -12,6 +12,8 @@ build/
 .env
 .env.*
 !.env.example
+src/config/env.config.ts
+!src/config/env.config.example.ts
 
 # IDE and editor files
 .idea/
