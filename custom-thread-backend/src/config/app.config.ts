@@ -1,94 +1,46 @@
-import dotenv from 'dotenv';
+import { env } from './env.config';
+import { logger } from './logger';
 
-// Load environment variables from .env file
-const result = dotenv.config();
-
-// Log environment loading status
-if (result.error) {
-    console.warn('Warning: No .env file found or error loading .env file.');
-}
-
-// Ensure critical environment variables are set
-const checkCriticalEnvVars = () => {
-    const criticalVars = ['MONGODB_URI', 'CORS_ORIGIN'];
-    const missing = criticalVars.filter((varName) => !process.env[varName]);
-
-    if (missing.length > 0) {
-        console.warn(`Warning: Missing critical environment variables: ${missing.join(', ')}`);
-        console.warn('Application may not function properly without these variables.');
+const validateMongoUri = (uri: string | undefined): string => {
+    if (!uri) {
+        throw new Error('MONGODB_URI is not defined in environment variables');
     }
+    return uri;
 };
-
-checkCriticalEnvVars();
-
-// Log MongoDB URI (redacted) for debugging
-const logMongoDbUri = () => {
-    const uri = process.env.MONGODB_URI;
-    if (uri) {
-        // Mask username/password in the URI for security
-        const maskedUri = uri.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@');
-        console.log(`MongoDB URI from environment: ${maskedUri}`);
-    } else {
-        console.log(
-            'MongoDB URI is not set in environment variables. Using fallback local connection.'
-        );
-    }
-};
-
-logMongoDbUri();
-
-
 
 export const appConfig = {
-    env: process.env.NODE_ENV || 'development',
-    port: parseInt(process.env.PORT || '3001', 10),
-    apiPrefix: '/api/v1',
-    cors: {
-        origin: function (
-            origin: string | undefined,
-            callback: (err: Error | null, allow?: boolean | string) => void
-        ) {
-            // Allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
-
-            if (process.env.CORS_ORIGIN) {
-                const allowedOrigins = process.env.CORS_ORIGIN.split(',');
-                if (allowedOrigins.indexOf(origin) !== -1) {
-                    callback(null, origin);
-                } else {
-                    callback(new Error('Not allowed by CORS'));
-                }
-            } else {
-                callback(new Error('CORS_ORIGIN is not set in environment variables.'));
-            }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-        exposedHeaders: ['Content-Range', 'X-Content-Range'],
-        maxAge: 600, // 10 minutes
-    },
-    cloudinary: {
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-        apiKey: process.env.CLOUDINARY_API_KEY,
-        apiSecret: process.env.CLOUDINARY_API_SECRET,
+    environment: env.NODE_ENV,
+    server: {
+        port: env.PORT,
     },
     database: {
-        url: process.env.MONGODB_URI || 'mongodb://localhost:27017/custom-thread',
-        // Add additional database configuration options here if needed
-        options: {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-        },
+        url: validateMongoUri(env.MONGODB_URI),
+    },
+    cors: {
+        origin: env.CORS_ORIGIN,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] as const,
+    },
+    cloudinary: {
+        cloudName: env.CLOUDINARY_CLOUD_NAME,
+        apiKey: env.CLOUDINARY_API_KEY,
+        apiSecret: env.CLOUDINARY_API_SECRET,
     },
     clerk: {
-        secretKey: process.env.CLERK_SECRET_KEY,
-        publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+        secretKey: env.CLERK_SECRET_KEY,
+        publishableKey: env.CLERK_PUBLISHABLE_KEY,
     },
-    jwt: {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-        expiresIn: '7d',
+    stripe: {
+        secretKey: env.STRIPE_SECRET_KEY,
+        publishableKey: env.STRIPE_PUBLISHABLE_KEY,
+        webhookSecret: env.WEBHOOK_ENDPOINT_SECRET,
     },
-};
+} as const;
+
+// Validate critical configuration
+try {
+    validateMongoUri(appConfig.database.url);
+    logger.info('Configuration loaded successfully');
+} catch (error) {
+    logger.error('Configuration validation failed:', error);
+    process.exit(1);
+}

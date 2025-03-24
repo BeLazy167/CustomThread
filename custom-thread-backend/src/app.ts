@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -7,6 +7,9 @@ import mongoose from 'mongoose';
 import { appConfig } from './config/app.config';
 import { logger } from './config/logger';
 import { requestLogger } from './middleware/request-logger.middleware';
+import { errorHandler } from './middleware/error.middleware';
+import { stripeWebhookHandler } from './controllers/order.controller';
+import { v2 as cloudinary } from 'cloudinary';
 
 // Import routes
 import designRoutes from './routes/v1/design.routes';
@@ -14,6 +17,7 @@ import orderRoutes from './routes/v1/order.routes';
 
 // Create Express app
 const app = express();
+const API_PREFIX = '/api/v1';
 
 /**
  * CORS Configuration
@@ -23,10 +27,12 @@ const app = express();
  * - allowedHeaders: specifies which headers can be included in requests
  */
 const corsOptions = {
-    origin: 'http://54.196.229.254:3002', // Use configured origin from env or fallback to all origins
+    origin: appConfig.cors.origin,
+    methods: [...appConfig.cors.methods], // Convert readonly array to mutable
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 600,
 };
 
 // Connect to MongoDB
@@ -64,7 +70,7 @@ app.use(requestLogger);
  * - Sets a higher limit (50mb) for JSON payloads to handle large requests
  */
 app.use((req, res, next) => {
-    if (req.originalUrl === `${appConfig.apiPrefix}/orders/webhook`) {
+    if (req.originalUrl === `${API_PREFIX}/orders/webhook`) {
         next();
     } else {
         express.json({ limit: '50mb' })(req, res, next);
@@ -93,40 +99,53 @@ app.use((req, res, next) => {
 // Log API version and environment on startup
 logger.info('API Configuration', {
     version: 'v1',
-    environment: appConfig.env,
+    environment: appConfig.environment,
     cors: {
-        origins: '*', // Logging that we're allowing all origins
-        methods: corsOptions.methods,
+        origin: appConfig.cors.origin,
+        methods: appConfig.cors.methods,
     },
 });
 
 // Register API Routes with their respective prefixes
-app.use(`${appConfig.apiPrefix}/designs`, designRoutes);
-app.use(`${appConfig.apiPrefix}/orders`, orderRoutes);
+app.use(`${API_PREFIX}/designs`, designRoutes);
+app.use(`${API_PREFIX}/orders`, orderRoutes);
 
-/**
- * Global error handling middleware
- * Catches any errors thrown in routes or middleware and returns a standardized response
- * In development mode, includes the error message for debugging
- */
-app.use((err: Error, req: express.Request, res: express.Response) => {
-    logger.error('Error:', { error: err.message, stack: err.stack });
-    res.status(500).json({
-        message: 'Internal Server Error',
-        ...(appConfig.env === 'development' && { error: err.message }),
+// Stripe webhook needs raw body
+app.post(
+    `${API_PREFIX}/orders/webhook`,
+    express.raw({ type: 'application/json' }),
+    stripeWebhookHandler
+);
+
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+    res.json({
+        status: 'ok',
+        environment: appConfig.environment,
+        timestamp: new Date().toISOString(),
     });
 });
+
+// Error handling
+app.use(errorHandler);
 
 /**
  * 404 handler for unmatched routes
  * Logs the attempted route and returns a standardized 404 response
  */
-app.use((req: express.Request, res: express.Response) => {
-    logger.warn(`Route not found: ${req.method} ${req.url}`, {
-        ip: req.ip,
-        userAgent: req.get('user-agent'),
+app.use((req: Request, res: Response) => {
+    res.status(404).json({
+        status: 'error',
+        message: 'Not Found',
+        path: req.path,
     });
-    res.status(404).json({ message: 'Not Found' });
+});
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: appConfig.cloudinary.cloudName,
+    api_key: appConfig.cloudinary.apiKey,
+    api_secret: appConfig.cloudinary.apiSecret,
 });
 
 export default app;
