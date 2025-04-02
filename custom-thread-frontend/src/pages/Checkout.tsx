@@ -103,6 +103,7 @@ export default function Checkout() {
                 designId: item.productId,
                 quantity: item.quantity,
                 size: item.size,
+                price: item.price,
                 customizations: {}, // Add any customizations if needed
             }));
 

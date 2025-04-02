@@ -49,6 +49,7 @@ export function CheckoutForm() {
                 designId: item.productId,
                 quantity: item.quantity,
                 size: item.size,
+                price: item.price,
                 customizations: {}, // Add any customizations if needed
             }));
 

@@ -117,11 +117,16 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
             const design = designs.find(
                 (d: any) => d._id.toString() === item.designId
             ) as DesignDocument;
+
+            // Items can have a custom price (e.g., bulk discount) specified by the client
+            // If not provided, use the design's price
+            const itemPrice = item.price || design?.designDetail?.price || 0;
+
             return {
                 designId: design?._id,
                 quantity: item.quantity,
                 size: item.size,
-                price: design?.designDetail?.price || 0,
+                price: itemPrice,
                 customizations: item.customizations || {},
             };
         });
@@ -151,15 +156,23 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
             const design = designs.find(
                 (d: any) => d._id.toString() === item.designId.toString()
             ) as DesignDocument;
+
+            // Use the price from orderItems (which might include bulk discounts)
+            const displayName = design?.designDetail?.title || 'Custom Design';
+            const itemPrice = item.price; // This already has any discounts applied
+
             return {
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: design?.designDetail?.title || 'Custom Design',
+                        name:
+                            item.quantity > 1
+                                ? `${displayName} (Qty: ${item.quantity})`
+                                : displayName,
                         description: design?.designDetail?.description || '',
                         images: design?.image ? [design.image] : [],
                     },
-                    unit_amount: Math.round(item.price * 100), // Convert to cents
+                    unit_amount: Math.round(itemPrice * 100), // Convert to cents
                 },
                 quantity: item.quantity,
             };
