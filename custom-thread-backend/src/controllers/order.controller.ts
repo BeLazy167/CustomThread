@@ -31,17 +31,19 @@ export const stripeWebhookHandler = async (req: Request, res: Response) => {
         );
 
         switch (event.type) {
-            case 'payment_intent.succeeded':
+            case 'payment_intent.succeeded': {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 logger.info('Payment succeeded:', paymentIntent.id);
                 // Handle successful payment
                 break;
+            }
 
-            case 'payment_intent.payment_failed':
+            case 'payment_intent.payment_failed': {
                 const failedPayment = event.data.object as Stripe.PaymentIntent;
                 logger.error('Payment failed:', failedPayment.id);
                 // Handle failed payment
                 break;
+            }
 
             default:
                 logger.info(`Unhandled event type: ${event.type}`);

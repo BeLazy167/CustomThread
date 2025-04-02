@@ -44,11 +44,11 @@ interface _DesignDoc {
 }
 
 /**
- * Get all orders for the authenticated userId
+ * Get all orders for the authenticated user
  */
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        const orders = await Order.find({ userId: req.auth?.userId }).populate({
+        const orders = await Order.find({ user: req.auth?.userId }).populate({
             path: 'items.designId',
             model: 'Design',
         });
@@ -69,7 +69,7 @@ export const getOrderById = async (req: Request, res: Response) => {
 
         const order = await Order.findOne({
             _id: orderId,
-            userId: req.auth?.userId,
+            user: req.auth?.userId,
         }).populate({
             path: 'items.designId',
             model: 'Design',
