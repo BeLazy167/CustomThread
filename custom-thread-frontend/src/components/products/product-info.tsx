@@ -53,6 +53,27 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
     const addToCart = useAddToCart();
     const { toast } = useToast();
 
+    // Add bulk order calculation
+    const bulkDiscountThreshold = 5; // Apply discount when ordering 5 or more
+    const bulkDiscountRate = 0.1; // 10% discount for bulk orders
+
+    // Calculate price with potential bulk discount
+    const getPriceWithDiscount = () => {
+        if (quantity >= bulkDiscountThreshold) {
+            return (product.price * (1 - bulkDiscountRate)).toFixed(2);
+        }
+        return product.price.toFixed(2);
+    };
+
+    // Get total price
+    const getTotalPrice = () => {
+        const pricePerItem =
+            quantity >= bulkDiscountThreshold
+                ? product.price * (1 - bulkDiscountRate)
+                : product.price;
+        return (pricePerItem * quantity).toFixed(2);
+    };
+
     // Default product data if none is provided
     const product = productData || {
         id: "default",
@@ -106,18 +127,35 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
             return;
         }
 
+        // Calculate the price with discount if applicable
+        const discountedPrice =
+            quantity >= bulkDiscountThreshold
+                ? product.price * (1 - bulkDiscountRate)
+                : product.price;
+
         const cartItem = {
             id: uuidv4(),
             productId: product.id,
             name: product.name,
-            price: product.price,
+            price: discountedPrice, // Use the discounted price
             image: product.image,
             size: selectedSize,
             quantity: quantity,
-            isCustomDesign: false,
+            isCustomDesign: !!product.isCustomDesign,
         };
 
         addToCart.mutate(cartItem);
+
+        // Show additional message for bulk orders
+        if (quantity >= bulkDiscountThreshold) {
+            toast({
+                title: "Bulk Discount Applied!",
+                description: `You saved ${(bulkDiscountRate * 100).toFixed(
+                    0
+                )}% on your order of ${quantity} items.`,
+                variant: "default",
+            });
+        }
     };
 
     return (
@@ -127,44 +165,53 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
             transition={{ duration: 0.4 }}
             className="space-y-6 w-full max-w-md mx-auto md:sticky md:top-8"
         >
-            <div>
+            <div className="text-center">
                 {product.isCustomDesign && (
-                    <Badge className="mb-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white">
+                    <Badge className="mb-3 mx-auto inline-flex bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white">
                         Custom Design
                     </Badge>
                 )}
-                <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">
                     {product.name}
                 </h1>
-                <div className="flex items-center mt-2">
-                    <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                                key={star}
-                                className="h-4 w-4 text-yellow-400 fill-yellow-400"
-                            />
-                        ))}
+
+                <div className="flex items-center gap-2 mb-4 justify-center">
+                    <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm font-medium">4.9</span>
+                        <span className="text-xs text-gray-500">(128)</span>
                     </div>
-                    <span className="text-sm text-muted-foreground ml-2">
-                        (24 reviews)
+                    <span className="text-xs text-gray-500">•</span>
+                    <span className="text-xs text-gray-500">
+                        Art. No. {product.id.slice(-6)}
                     </span>
                 </div>
-                <p className="text-xl sm:text-2xl font-bold mt-3 text-black dark:text-white">
-                    ${product.price.toFixed(2)}
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Art. No. {product.id.padStart(10, "0")}
-                </p>
+
+                <div className="flex items-baseline gap-2 justify-center">
+                    <span className="text-2xl font-bold">
+                        ${getPriceWithDiscount()}
+                    </span>
+                    {quantity >= bulkDiscountThreshold && (
+                        <>
+                            <span className="text-sm line-through text-gray-500 ml-1">
+                                ${product.price.toFixed(2)}
+                            </span>
+                            <span className="text-sm text-green-600 dark:text-green-500 font-medium">
+                                (10% off)
+                            </span>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-center">
                 <h2 className="text-sm font-semibold mb-2 text-black dark:text-white">
                     Select size
                 </h2>
                 <RadioGroup
                     value={selectedSize}
                     onValueChange={setSelectedSize}
-                    className="flex gap-2 sm:gap-3 flex-wrap"
+                    className="flex gap-2 sm:gap-3 flex-wrap justify-center"
                 >
                     {sizes.map((size) => (
                         <div key={size}>
@@ -189,45 +236,95 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                 </RadioGroup>
             </div>
 
-            <div className="pt-2 space-y-4">
-                <div className="flex items-center">
-                    <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-md">
-                        <button
-                            onClick={() =>
-                                setQuantity(Math.max(1, quantity - 1))
-                            }
-                            className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                        >
-                            <MinusIcon size={18} />
-                        </button>
-                        <span className="px-3 py-2 font-medium text-center w-12">
-                            {quantity}
-                        </span>
-                        <button
-                            onClick={() => setQuantity(quantity + 1)}
-                            className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                        >
-                            <PlusIcon size={18} />
-                        </button>
+            <div className="pt-2 space-y-6">
+                <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Quantity
+                        </label>
+                        <div className="flex gap-2">
+                            {[5, 10, 20].map((qty) => (
+                                <button
+                                    key={qty}
+                                    onClick={() => setQuantity(qty)}
+                                    className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                        quantity === qty
+                                            ? "bg-primary text-white"
+                                            : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    }`}
+                                >
+                                    {qty}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 items-center justify-center">
+                        <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-md">
+                            <button
+                                onClick={() =>
+                                    setQuantity(Math.max(1, quantity - 1))
+                                }
+                                className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                                aria-label="Decrease quantity"
+                            >
+                                <MinusIcon size={18} />
+                            </button>
+                            <span className="px-3 py-2 font-medium text-center w-12">
+                                {quantity}
+                            </span>
+                            <button
+                                onClick={() => setQuantity(quantity + 1)}
+                                className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                                aria-label="Increase quantity"
+                            >
+                                <PlusIcon size={18} />
+                            </button>
+                        </div>
+
+                        {/* Bulk discount info */}
+                        {quantity < bulkDiscountThreshold ? (
+                            <div className="text-sm rounded-md py-1 px-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-medium border border-green-100 dark:border-green-900/30">
+                                Add {bulkDiscountThreshold - quantity} more for
+                                10% off
+                            </div>
+                        ) : (
+                            <div className="text-sm rounded-md py-1 px-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-medium border border-green-100 dark:border-green-900/30 flex items-center gap-1">
+                                <Check className="h-3.5 w-3.5" />
+                                <span>Bulk discount applied</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <Button
                         size="lg"
-                        className="w-full bg-primary hover:bg-primary/90 text-white"
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-6 transition-all duration-200 shadow-sm hover:shadow"
                         onClick={handleAddToCart}
                         disabled={addToCart.isPending}
                     >
                         {addToCart.isPending ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                 Adding to cart...
                             </>
                         ) : (
                             <>
-                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                Add to cart
+                                <ShoppingCart className="mr-2 h-5 w-5" />
+                                {quantity > 1 ? (
+                                    <span className="flex items-center gap-1.5">
+                                        Add to cart
+                                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                                            {quantity}
+                                        </span>
+                                        <span className="font-normal opacity-90">
+                                            ${getTotalPrice()}
+                                        </span>
+                                    </span>
+                                ) : (
+                                    "Add to cart"
+                                )}
                             </>
                         )}
                     </Button>
@@ -238,7 +335,7 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                         onClick={() => setIsFavorited(!isFavorited)}
                     >
                         <Heart
-                            className={`h-4 w-4 sm:h-5 sm:w-5 mr-2 ${
+                            className={`h-5 w-5 mr-2 ${
                                 isFavorited
                                     ? "text-red-500 fill-red-500"
                                     : "text-gray-800 dark:text-gray-200"
@@ -252,8 +349,8 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
             </div>
 
             <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <Truck className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg justify-center">
+                    <Truck className="h-5 w-5 text-primary flex-shrink-0" />
                     <div>
                         <p className="text-sm font-medium">Free shipping</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -262,8 +359,8 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <RefreshCw className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg justify-center">
+                    <RefreshCw className="h-5 w-5 text-primary flex-shrink-0" />
                     <div>
                         <p className="text-sm font-medium">Easy returns</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -272,8 +369,8 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <Check className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg justify-center">
+                    <Check className="h-5 w-5 text-primary flex-shrink-0" />
                     <div>
                         <p className="text-sm font-medium">In stock</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -295,15 +392,17 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                         )
                     }
                 >
-                    <div className="flex items-center justify-between p-4">
+                    <div className="p-4 text-center relative">
                         <h3 className="text-sm font-semibold">
                             Product Description
                         </h3>
-                        {activeTab === "description" ? (
-                            <ChevronUp className="h-4 w-4" />
-                        ) : (
-                            <ChevronDown className="h-4 w-4" />
-                        )}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            {activeTab === "description" ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" />
+                            )}
+                        </div>
                     </div>
                 </div>
                 <AnimatePresence>
@@ -315,7 +414,7 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                            <div className="p-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
                                 {product.description}
                             </div>
                         </motion.div>
@@ -332,15 +431,17 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                         )
                     }
                 >
-                    <div className="flex items-center justify-between p-4">
+                    <div className="p-4 text-center relative">
                         <h3 className="text-sm font-semibold">
                             Shipping & Returns
                         </h3>
-                        {activeTab === "shipping" ? (
-                            <ChevronUp className="h-4 w-4" />
-                        ) : (
-                            <ChevronDown className="h-4 w-4" />
-                        )}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            {activeTab === "shipping" ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" />
+                            )}
+                        </div>
                     </div>
                 </div>
                 <AnimatePresence>
@@ -352,7 +453,7 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300 text-center">
                                 <p>
                                     Free standard shipping on orders over $50.
                                 </p>
@@ -373,15 +474,17 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                         setActiveTab(activeTab === "care" ? null : "care")
                     }
                 >
-                    <div className="flex items-center justify-between p-4">
+                    <div className="p-4 text-center relative">
                         <h3 className="text-sm font-semibold">
                             Care Instructions
                         </h3>
-                        {activeTab === "care" ? (
-                            <ChevronUp className="h-4 w-4" />
-                        ) : (
-                            <ChevronDown className="h-4 w-4" />
-                        )}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            {activeTab === "care" ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" />
+                            )}
+                        </div>
                     </div>
                 </div>
                 <AnimatePresence>
@@ -393,7 +496,7 @@ export default function ProductInfo({ productData }: ProductInfoProps) {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300 text-center">
                                 <p>Machine wash cold with similar colors.</p>
                                 <p>Do not bleach. Tumble dry low.</p>
                                 <p>Cool iron if needed. Do not dry clean.</p>
