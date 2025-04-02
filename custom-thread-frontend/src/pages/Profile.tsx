@@ -110,7 +110,7 @@ export default function Profile() {
         return <Navigate to="/sign-in" replace />;
     }
 
-    const handleCancelOrder = async (orderId) => {
+    const handleCancelOrder = async (orderId: string) => {
         try {
             await cancelOrder(orderId);
             toast({
@@ -118,12 +118,15 @@ export default function Profile() {
                 description: "Your order has been successfully cancelled.",
                 variant: "default",
             });
-        } catch (err) {
+        } catch (err: unknown) {
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : "Unable to cancel order. Only pending orders can be cancelled.";
+
             toast({
                 title: "Error",
-                description:
-                    err.message ||
-                    "Unable to cancel order. Only pending orders can be cancelled.",
+                description: errorMessage,
                 variant: "destructive",
             });
         }

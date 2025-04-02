@@ -62,8 +62,8 @@ import {
 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useUserDesigns } from "../../hooks/use-user-designs";
-import { useUserOrders, Order as OrderType } from "../../hooks/use-user-orders";
-import { formatDistanceToNow, format } from "date-fns";
+import { useUserOrders } from "../../hooks/use-user-orders";
+import { format } from "date-fns";
 import { toast } from "../ui/use-toast";
 
 // Define types for user data
@@ -167,10 +167,14 @@ const OrdersTab = () => {
                 title: "Order Cancelled",
                 description: "Your order has been successfully cancelled.",
             });
-        } catch (error) {
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to cancel order";
             toast({
                 title: "Error",
-                description: error.message || "Failed to cancel order",
+                description: errorMessage,
                 variant: "destructive",
             });
         }
@@ -221,14 +225,22 @@ const OrdersTab = () => {
                                     ? "Your session has expired. Please sign out and sign in again to view your orders."
                                     : "Something went wrong while loading your orders."}
                             </p>
-                            {(ordersError.message?.includes(
+                            {(ordersError?.message?.includes(
                                 "Authentication failed"
                             ) ||
-                                ordersError.message?.includes(
+                                ordersError?.message?.includes(
                                     "Unauthorized"
                                 )) && (
                                 <Button
-                                    onClick={() => window.Clerk?.signOut()}
+                                    onClick={() => {
+                                        if (
+                                            window.Clerk &&
+                                            typeof window.Clerk.signOut ===
+                                                "function"
+                                        ) {
+                                            window.Clerk.signOut();
+                                        }
+                                    }}
                                     variant="outline"
                                     className="mt-4"
                                 >
@@ -442,15 +454,6 @@ export default function ProfilePage() {
         fetchNextPage,
         fetchPreviousPage,
     } = useUserDesigns();
-    const {
-        orders,
-        loading: ordersLoading,
-        error: ordersError,
-        cancelOrder,
-        pagination: ordersPagination,
-        fetchNextPage: ordersNextPage,
-        fetchPreviousPage: ordersPrevPage,
-    } = useUserOrders();
 
     // Initialize with default user data
     const initialUserData: UserData = {
@@ -560,17 +563,17 @@ export default function ProfilePage() {
                         <div className="flex-shrink-0">
                             <div className="rounded-full p-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
                                 <Avatar className="w-32 h-32 border-4 border-background shadow-2xl hover:scale-105 transition-all duration-300">
-                            <AvatarImage
-                                src={user?.imageUrl || ""}
-                                alt={userData.name}
-                            />
+                                    <AvatarImage
+                                        src={user?.imageUrl || ""}
+                                        alt={userData.name}
+                                    />
                                     <AvatarFallback className="bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-500 dark:to-purple-600 text-white text-4xl">
-                                {userData.name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                            </AvatarFallback>
-                        </Avatar>
+                                        {userData.name
+                                            .split(" ")
+                                            .map((n) => n[0])
+                                            .join("")}
+                                    </AvatarFallback>
+                                </Avatar>
                             </div>
                             <Button
                                 size="icon"
@@ -779,35 +782,35 @@ export default function ProfilePage() {
                     className="col-span-1"
                 >
                     <Card className="shadow-md hover:shadow-lg transition-shadow dark:bg-slate-900 dark:border-slate-800">
-                    <CardContent className="p-6">
+                        <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 </div>
-                            <div>
+                                <div>
                                     <p className="text-sm text-muted-foreground dark:text-slate-400">
-                                    Email
-                                </p>
+                                        Email
+                                    </p>
                                     <p className="font-medium dark:text-white">
                                         {userData.email}
                                     </p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 </div>
-                            <div>
+                                <div>
                                     <p className="text-sm text-muted-foreground dark:text-slate-400">
-                                    Location
-                                </p>
+                                        Location
+                                    </p>
                                     <p className="font-medium dark:text-white">
-                                    {userData.location}
-                                </p>
+                                        {userData.location}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -816,7 +819,7 @@ export default function ProfilePage() {
                     className="col-span-1"
                 >
                     <Card className="shadow-md hover:shadow-lg transition-shadow dark:bg-slate-900 dark:border-slate-800">
-                    <CardContent className="p-6">
+                        <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -830,21 +833,21 @@ export default function ProfilePage() {
                                     </p>
                                 </div>
                             </div>
-                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 </div>
-                            <div>
+                                <div>
                                     <p className="text-sm text-muted-foreground dark:text-slate-400">
                                         Status
-                                </p>
+                                    </p>
                                     <p className="font-medium dark:text-white">
                                         Premium Designer
                                     </p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -853,7 +856,7 @@ export default function ProfilePage() {
                     className="col-span-1"
                 >
                     <Card className="shadow-md hover:shadow-lg transition-shadow dark:bg-slate-900 dark:border-slate-800">
-                    <CardContent className="p-6">
+                        <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -867,11 +870,11 @@ export default function ProfilePage() {
                                     </p>
                                 </div>
                             </div>
-                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
                                     <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 </div>
-                            <div>
+                                <div>
                                     <p className="text-sm text-muted-foreground dark:text-slate-400">
                                         Total Views
                                     </p>
@@ -897,8 +900,8 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground dark:text-slate-400">
-                                    Total Revenue
-                                </p>
+                                        Total Revenue
+                                    </p>
                                     <p className="font-medium dark:text-white">
                                         $4,550.00
                                     </p>
@@ -915,10 +918,10 @@ export default function ProfilePage() {
                                     <p className="font-medium dark:text-white">
                                         187
                                     </p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
                 </motion.div>
             </div>
 
@@ -973,31 +976,31 @@ export default function ProfilePage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="col-span-2">
                                 <Card className="shadow-md dark:bg-slate-900 dark:border-slate-800">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="flex items-center gap-2 text-xl dark:text-white">
                                             <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                        Sales Overview
-                                    </CardTitle>
+                                            Sales Overview
+                                        </CardTitle>
                                         <CardDescription className="dark:text-slate-400">
                                             Your design sales over the last 6
                                             months
                                         </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="h-[300px]">
-                                        <ResponsiveContainer
-                                            width="100%"
-                                            height="100%"
-                                        >
-                                            <BarChart data={salesData}>
-                                                <CartesianGrid
-                                                    strokeDasharray="3 3"
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[300px]">
+                                            <ResponsiveContainer
+                                                width="100%"
+                                                height="100%"
+                                            >
+                                                <BarChart data={salesData}>
+                                                    <CartesianGrid
+                                                        strokeDasharray="3 3"
                                                         stroke="var(--border)"
-                                                    opacity={0.3}
-                                                />
+                                                        opacity={0.3}
+                                                    />
                                                     <XAxis
                                                         dataKey="name"
                                                         axisLine={false}
@@ -1028,11 +1031,11 @@ export default function ProfilePage() {
                                                             "Sales",
                                                         ]}
                                                     />
-                                                <Bar
-                                                    dataKey="value"
+                                                    <Bar
+                                                        dataKey="value"
                                                         fill="url(#colorGradient)"
-                                                    radius={[4, 4, 0, 0]}
-                                                />
+                                                        radius={[4, 4, 0, 0]}
+                                                    />
                                                     <defs>
                                                         <linearGradient
                                                             id="colorGradient"
@@ -1057,61 +1060,61 @@ export default function ProfilePage() {
                                                             />
                                                         </linearGradient>
                                                     </defs>
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-span-1">
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                            <div className="col-span-1">
                                 <Card className="shadow-md dark:bg-slate-900 dark:border-slate-800 h-full">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="flex items-center gap-2 text-xl dark:text-white">
                                             <PieChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                        Product Distribution
-                                    </CardTitle>
+                                            Product Distribution
+                                        </CardTitle>
                                         <CardDescription className="dark:text-slate-400">
                                             Sales by product category
                                         </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="h-[250px]">
-                                        <ResponsiveContainer
-                                            width="100%"
-                                            height="100%"
-                                        >
-                                            <PieChart>
-                                                <Pie
-                                                    data={pieData}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    labelLine={false}
-                                                    outerRadius={80}
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[250px]">
+                                            <ResponsiveContainer
+                                                width="100%"
+                                                height="100%"
+                                            >
+                                                <PieChart>
+                                                    <Pie
+                                                        data={pieData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        labelLine={false}
+                                                        outerRadius={80}
                                                         fill="#8884d8"
-                                                    dataKey="value"
-                                                    label={({
-                                                        name,
-                                                        percent,
-                                                    }) =>
-                                                        `${name} ${(
-                                                            percent * 100
-                                                        ).toFixed(0)}%`
-                                                    }
-                                                >
+                                                        dataKey="value"
+                                                        label={({
+                                                            name,
+                                                            percent,
+                                                        }) =>
+                                                            `${name} ${(
+                                                                percent * 100
+                                                            ).toFixed(0)}%`
+                                                        }
+                                                    >
                                                         {pieData.map(
                                                             (_, index) => (
-                                                        <Cell
-                                                            key={`cell-${index}`}
-                                                            fill={
-                                                                COLORS[
-                                                                    index %
-                                                                        COLORS.length
-                                                                ]
-                                                            }
-                                                        />
+                                                                <Cell
+                                                                    key={`cell-${index}`}
+                                                                    fill={
+                                                                        COLORS[
+                                                                            index %
+                                                                                COLORS.length
+                                                                        ]
+                                                                    }
+                                                                />
                                                             )
                                                         )}
-                                                </Pie>
+                                                    </Pie>
                                                     <Tooltip
                                                         contentStyle={{
                                                             backgroundColor:
@@ -1127,13 +1130,13 @@ export default function ProfilePage() {
                                                             "Sales",
                                                         ]}
                                                     />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </div>
-                    </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                             <Card className="shadow-md hover:shadow-lg transition-shadow dark:bg-slate-900 dark:border-slate-800">
                                 <CardContent className="p-6">
@@ -1206,23 +1209,23 @@ export default function ProfilePage() {
                         transition={{ duration: 0.3 }}
                     >
                         <Card className="shadow-md dark:bg-slate-900 dark:border-slate-800">
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
                                     <CardTitle className="flex items-center gap-2 text-xl dark:text-white">
                                         <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                    Your Designs
-                                </CardTitle>
+                                        Your Designs
+                                    </CardTitle>
                                     <Button className="bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-600">
-                                    Create New Design
-                                </Button>
-                            </div>
+                                        Create New Design
+                                    </Button>
+                                </div>
                                 <CardDescription className="dark:text-slate-400">
                                     Manage and track your design portfolio
                                 </CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                            </CardHeader>
+                            <CardContent>
                                 {designsLoading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {[1, 2, 3].map((i) => (
                                             <Skeleton
                                                 key={i}
@@ -1242,7 +1245,7 @@ export default function ProfilePage() {
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             {designs.map((design, index) => (
                                                 <motion.div
-                                        key={design.id}
+                                                    key={design.id}
                                                     initial={{
                                                         opacity: 0,
                                                         y: 20,
@@ -1262,7 +1265,7 @@ export default function ProfilePage() {
                                                                     {
                                                                         design.status
                                                                     }
-                                            </Badge>
+                                                                </Badge>
                                                             </div>
                                                             <img
                                                                 src={
@@ -1271,44 +1274,44 @@ export default function ProfilePage() {
                                                                 alt={
                                                                     design.title
                                                                 }
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <CardContent className="p-4">
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <CardContent className="p-4">
                                                             <h3 className="font-medium text-lg mb-2 dark:text-white">
                                                                 {design.title}
-                                            </h3>
+                                                            </h3>
                                                             <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                                <div className="flex items-center gap-1">
-                                                    <Eye className="h-4 w-4" />
+                                                                <div className="flex items-center gap-1">
+                                                                    <Eye className="h-4 w-4" />
                                                                     <span>
                                                                         {
                                                                             design.views
                                                                         }
                                                                     </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Heart className="h-4 w-4" />
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Heart className="h-4 w-4" />
                                                                     <span>
                                                                         {
                                                                             design.likes
                                                                         }
                                                                     </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <MessageSquare className="h-4 w-4" />
-                                                    <span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <MessageSquare className="h-4 w-4" />
+                                                                    <span>
                                                                         {
                                                                             design.comments
                                                                         }
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
                                                 </motion.div>
-                                ))}
-                            </div>
+                                            ))}
+                                        </div>
                                         {pagination.totalPages > 1 && (
                                             <div className="flex justify-center gap-2 mt-6">
                                                 <Button
@@ -1347,8 +1350,8 @@ export default function ProfilePage() {
                                         </Button>
                                     </div>
                                 )}
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
                     </motion.div>
                 </TabsContent>
 
@@ -1363,38 +1366,38 @@ export default function ProfilePage() {
                         transition={{ duration: 0.3 }}
                     >
                         <Card className="shadow-md dark:bg-slate-900 dark:border-slate-800">
-                        <CardHeader>
+                            <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-xl dark:text-white">
                                     <User className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                Profile Details
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
+                                    Profile Details
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div>
                                         <h3 className="text-lg font-medium dark:text-white">
                                             Bio
                                         </h3>
                                         <p className="text-muted-foreground dark:text-slate-400">
                                             {userData.bio}
-                                    </p>
-                                </div>
-                                <div>
+                                        </p>
+                                    </div>
+                                    <div>
                                         <h3 className="text-lg font-medium dark:text-white">
-                                        Location
-                                    </h3>
+                                            Location
+                                        </h3>
                                         <p className="text-muted-foreground dark:text-slate-400">
-                                        {userData.location}
-                                    </p>
-                                </div>
-                                <div>
+                                            {userData.location}
+                                        </p>
+                                    </div>
+                                    <div>
                                         <h3 className="text-lg font-medium dark:text-white">
-                                        Member Since
-                                    </h3>
+                                            Member Since
+                                        </h3>
                                         <p className="text-muted-foreground dark:text-slate-400">
                                             {userData.memberSince}
-                                    </p>
-                                </div>
+                                        </p>
+                                    </div>
                                     <div>
                                         <h3 className="text-lg font-medium dark:text-white">
                                             Specialties
@@ -1412,10 +1415,10 @@ export default function ProfilePage() {
                                                 )
                                             )}
                                         </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
                     </motion.div>
                 </TabsContent>
             </Tabs>
