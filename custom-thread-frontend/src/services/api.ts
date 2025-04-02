@@ -1,3 +1,15 @@
+// Augment the Window interface to include Clerk
+declare global {
+    interface Window {
+        Clerk?: {
+            session?: {
+                getToken: () => Promise<string | null>;
+            };
+            signOut?: () => Promise<void>;
+        };
+    }
+}
+
 // Define interfaces for API parameters and data
 interface QueryParams {
     [key: string]: string | number | boolean | undefined;
@@ -91,13 +103,19 @@ const API_URL = API_URL_WITHOUT_API + "/api/v1";
 // Get the Clerk token
 const getClerkToken = async (): Promise<string | null> => {
     try {
-        // For development/testing, you can use this to bypass authentication
-        // This should be removed in production
-        return "development_token";
+        // IMPORTANT: For development only - using a hardcoded token for testing
+        // This must match the test token in the backend authentication middleware
+        return "test_development_token";
 
-        // In production, uncomment this to use the actual Clerk token
-        // const token = await window.Clerk?.session?.getToken();
-        // return token || null;
+        /* 
+        // Production implementation:
+        if (window.Clerk?.session) {
+            const token = await window.Clerk.session.getToken();
+            return token;
+        }
+        console.warn("No Clerk session available - user might need to sign in");
+        return null;
+        */
     } catch (error) {
         console.error("Error getting Clerk token:", error);
         return null;
@@ -125,9 +143,29 @@ const api = {
             headers,
             credentials: "omit", // Adjust as needed: 'include', 'same-origin'
         });
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 401) {
+                throw new Error(
+                    `HTTP error 401: Unauthorized - Please sign in again`
+                );
+            } else if (response.status === 403) {
+                throw new Error(
+                    `HTTP error 403: Forbidden - You don't have permission`
+                );
+            } else if (response.status === 404) {
+                throw new Error(
+                    `HTTP error 404: Not found - Resource doesn't exist`
+                );
+            } else if (response.status >= 500) {
+                throw new Error(
+                    `HTTP error ${response.status}: Server error - Try again later`
+                );
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
         }
+
         return await response.json();
     },
 
@@ -148,7 +186,25 @@ const api = {
             credentials: "omit",
         });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 401) {
+                throw new Error(
+                    `HTTP error 401: Unauthorized - Please sign in again`
+                );
+            } else if (response.status === 403) {
+                throw new Error(
+                    `HTTP error 403: Forbidden - You don't have permission`
+                );
+            } else if (response.status === 404) {
+                throw new Error(
+                    `HTTP error 404: Not found - Resource doesn't exist`
+                );
+            } else if (response.status >= 500) {
+                throw new Error(
+                    `HTTP error ${response.status}: Server error - Try again later`
+                );
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
         }
         return await response.json();
     },
@@ -170,7 +226,25 @@ const api = {
             credentials: "omit",
         });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 401) {
+                throw new Error(
+                    `HTTP error 401: Unauthorized - Please sign in again`
+                );
+            } else if (response.status === 403) {
+                throw new Error(
+                    `HTTP error 403: Forbidden - You don't have permission`
+                );
+            } else if (response.status === 404) {
+                throw new Error(
+                    `HTTP error 404: Not found - Resource doesn't exist`
+                );
+            } else if (response.status >= 500) {
+                throw new Error(
+                    `HTTP error ${response.status}: Server error - Try again later`
+                );
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
         }
         return await response.json();
     },
@@ -189,7 +263,25 @@ const api = {
             credentials: "omit",
         });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 401) {
+                throw new Error(
+                    `HTTP error 401: Unauthorized - Please sign in again`
+                );
+            } else if (response.status === 403) {
+                throw new Error(
+                    `HTTP error 403: Forbidden - You don't have permission`
+                );
+            } else if (response.status === 404) {
+                throw new Error(
+                    `HTTP error 404: Not found - Resource doesn't exist`
+                );
+            } else if (response.status >= 500) {
+                throw new Error(
+                    `HTTP error ${response.status}: Server error - Try again later`
+                );
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
         }
         return await response.json();
     },
@@ -229,10 +321,34 @@ export const cartApi = {
 export const orderApi = {
     getOrders: async () => api.get("/orders"),
     getOrderById: async (orderId: string) => api.get(`/orders/${orderId}`),
+    getUserOrders: async (page: number = 1, limit: number = 10) => {
+        try {
+            return await api.get("/orders/user", { page, limit });
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("401")) {
+                throw new Error(
+                    "Authentication failed. Please sign in again to view your orders."
+                );
+            }
+            throw error;
+        }
+    },
     createCheckoutSession: async (checkoutData: CheckoutSessionRequest) =>
         api.post("/orders/checkout", checkoutData),
     updateOrderStatus: async (orderId: string, status: Order["status"]) =>
         api.patch(`/orders/${orderId}/status`, { status }),
+    cancelOrder: async (orderId: string) => {
+        try {
+            return await api.patch(`/orders/${orderId}/cancel`, {});
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("401")) {
+                throw new Error(
+                    "Authentication failed. Please sign in again to cancel your order."
+                );
+            }
+            throw error;
+        }
+    },
 };
 
 export default api;
