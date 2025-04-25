@@ -54,10 +54,13 @@ interface ShippingDetails {
     name: string;
     email: string;
     address: string;
+    address2?: string;
     city: string;
+    state: string;
     contact: string;
     country: string;
     postalCode: string;
+    shippingMethod?: string;
 }
 
 interface CheckoutSessionRequest {
@@ -105,9 +108,9 @@ const getClerkToken = async (): Promise<string | null> => {
     try {
         // IMPORTANT: For development only - using a hardcoded token for testing
         // This must match the test token in the backend authentication middleware
-        return "test_development_token";
+        return "development_token";
 
-        /* 
+        /*
         // Production implementation:
         if (window.Clerk?.session) {
             const token = await window.Clerk.session.getToken();

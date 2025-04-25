@@ -22,10 +22,13 @@ type _CheckoutSessionRequest = {
         name: string;
         email: string;
         address: string;
+        address2?: string;
         city: string;
+        state: string;
         contact: string;
         country: string;
         postalCode: string;
+        shippingMethod?: string;
     };
 };
 
@@ -91,8 +94,12 @@ export const getOrderById = async (req: Request, res: Response) => {
  */
 export const createCheckoutSession = async (req: AuthRequest, res: Response) => {
     try {
+        console.log('Received checkout request:', JSON.stringify(req.body, null, 2));
+        console.log('Auth info:', req.auth);
+
         // Validate request body
         if (!req.body.items || !req.body.shippingDetails) {
+            console.log('Missing items or shipping details');
             return res.status(400).json({
                 success: false,
                 message: 'Items and shipping details are required',
@@ -101,6 +108,7 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
 
         // Validate cart items and fetch design details
         const { items, shippingDetails } = req.body;
+        console.log('Shipping details:', JSON.stringify(shippingDetails, null, 2));
         const designIds = items.map((item: any) => item.designId);
 
         const designs = await DesignModel.find({ _id: { $in: designIds } });

@@ -25,6 +25,7 @@ export type AuthRequest = Request & {
 // Development authentication middleware for testing
 const developmentAuth = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
+    console.log('Auth header:', authHeader);
 
     if (authHeader === 'Bearer development_token') {
         // Set mock auth data for development
@@ -32,9 +33,11 @@ const developmentAuth = (req: Request, res: Response, next: NextFunction) => {
             userId: 'dev_user_123',
             sessionId: 'dev_session_123',
         };
+        console.log('Using development token auth');
         return next();
     }
 
+    console.log('No development token found, proceeding with Clerk middleware');
     // If not using development token, proceed to Clerk middleware
     return clerkMiddleware()(req, res, next);
 };

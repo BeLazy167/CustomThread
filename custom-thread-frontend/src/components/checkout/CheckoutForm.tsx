@@ -10,6 +10,7 @@ interface ShippingDetails {
     email: string;
     address: string;
     city: string;
+    state: string;
     contact: string;
     country: string;
     postalCode: string;
@@ -23,6 +24,7 @@ export function CheckoutForm() {
         email: "",
         address: "",
         city: "",
+        state: "",
         contact: "",
         country: "",
         postalCode: "",

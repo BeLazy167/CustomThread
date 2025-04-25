@@ -16,10 +16,13 @@ interface IShippingDetails {
     name: string;
     email: string;
     address: string;
+    address2?: string;
     city: string;
+    state: string;
     contact: string;
     country: string;
     postalCode: string;
+    shippingMethod?: string;
 }
 
 export interface IOrder extends Document {
@@ -82,7 +85,15 @@ const OrderSchema: Schema = new Schema({
             type: String,
             required: true,
         },
+        address2: {
+            type: String,
+            required: false,
+        },
         city: {
+            type: String,
+            required: true,
+        },
+        state: {
             type: String,
             required: true,
         },
@@ -97,6 +108,10 @@ const OrderSchema: Schema = new Schema({
         postalCode: {
             type: String,
             required: true,
+        },
+        shippingMethod: {
+            type: String,
+            required: false,
         },
     },
     status: {

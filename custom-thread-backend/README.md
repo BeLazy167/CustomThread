@@ -208,10 +208,13 @@ interface CheckoutSessionRequest {
         name: string;
         email: string;
         address: string;
+        address2?: string;
         city: string;
+        state: string;
         contact: string;
         country: string;
         postalCode: string;
+        shippingMethod?: string;
     };
 }
 ```

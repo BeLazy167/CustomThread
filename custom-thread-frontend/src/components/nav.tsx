@@ -32,14 +32,14 @@ const ThemeToggle = () => {
 
     return (
         <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="bg-transparent border-none focus:ring-2 focus:ring-primary/20"
+            className="h-9 w-9 rounded-full border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
         >
-            <SunIcon className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-black dark:text-white" />
-            <MoonIcon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-black dark:text-white" />
+            <SunIcon className="absolute h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-foreground" />
+            <MoonIcon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground" />
         </Button>
     );
 };
@@ -71,12 +71,12 @@ export default function Nav() {
         return (
             <header className="fixed top-0 left-0 z-50 p-4">
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     onClick={() => navigate(-1)}
-                    className="bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800 shadow-sm"
+                    className="h-9 w-9 rounded-full border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
                 >
-                    <ArrowLeft className="h-6 w-6" />
+                    <ArrowLeft className="h-[18px] w-[18px]" />
                     <span className="sr-only">Go back</span>
                 </Button>
             </header>
@@ -84,7 +84,7 @@ export default function Nav() {
     }
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-lg shadow-sm">
             <div className="container mx-auto px-4 max-w-7xl">
                 <nav className="flex h-16 items-center justify-between">
                     <motion.a
@@ -97,7 +97,7 @@ export default function Nav() {
                     </motion.a>
 
                     <motion.div
-                        className="flex items-center gap-3"
+                        className="flex items-center gap-2"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.3 }}
@@ -105,84 +105,84 @@ export default function Nav() {
                         <ThemeToggle />
                         <CartDropdown />
                         {isSignedIn ? (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
-                                    size="sm"
-                                    className="hidden sm:flex items-center gap-2 dark:border-slate-700 dark:text-slate-300"
+                                    size="icon"
+                                    className="relative hidden sm:flex h-9 w-9 rounded-full border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
                                 >
-                                    <Bell className="h-4 w-4" />
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
+                                    <Bell className="h-[18px] w-[18px]" />
+                                    <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center">
+                                        <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
                                     </span>
                                 </Button>
 
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="sm"
-                                            className="flex items-center gap-2"
+                                            className="flex items-center gap-2 rounded-full border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors pl-1 pr-3 py-1.5"
                                         >
-                                            <Avatar className="h-8 w-8 border-2 border-white dark:border-slate-800 shadow-sm">
+                                            <Avatar className="h-7 w-7 border border-border shadow-sm">
                                                 <AvatarImage
                                                     src={user?.imageUrl}
                                                     alt={
                                                         user?.fullName || "User"
                                                     }
                                                 />
-                                                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                                                <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
                                                     {user?.fullName
                                                         ?.split(" ")
                                                         .map((n) => n[0])
                                                         .join("") || "U"}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <span className="hidden sm:inline dark:text-white">
+                                            <span className="hidden sm:inline text-foreground text-sm font-medium">
                                                 {user?.username ||
                                                     user?.fullName ||
                                                     "User"}
                                             </span>
-                                            <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                         align="end"
-                                        className="w-56 bg-white/90 backdrop-blur-md dark:bg-slate-900/90 dark:border-slate-800 shadow-lg rounded-xl"
+                                        className="w-56 bg-card/95 backdrop-blur-md border-border shadow-lg rounded-xl"
                                     >
                                         <div className="flex items-center justify-start p-3">
                                             <div className="flex flex-col space-y-1 leading-none">
-                                                <p className="font-medium text-slate-900 dark:text-white">
+                                                <p className="font-medium text-foreground">
                                                     {user?.username ||
                                                         user?.fullName ||
                                                         "User"}
                                                 </p>
-                                                <p className="w-[200px] truncate text-sm text-slate-500 dark:text-slate-400">
+                                                <p className="w-[200px] truncate text-sm text-muted-foreground">
                                                     {user?.primaryEmailAddress
                                                         ?.emailAddress || ""}
                                                 </p>
                                             </div>
                                         </div>
-                                        <DropdownMenuSeparator className="dark:border-slate-700" />
+                                        <DropdownMenuSeparator className="border-border" />
                                         <DropdownMenuItem
                                             onClick={() => navigate("/profile")}
-                                            className="cursor-pointer flex items-center gap-2 p-2.5 text-slate-800 dark:text-white dark:hover:bg-slate-800/70"
+                                            className="cursor-pointer flex items-center gap-2 p-2.5 text-foreground hover:bg-accent hover:text-accent-foreground"
                                         >
                                             <User className="mr-2 h-4 w-4" />
                                             <span>Profile</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="cursor-pointer flex items-center gap-2 p-2.5 text-slate-800 dark:text-white dark:hover:bg-slate-800/70">
+                                        <DropdownMenuItem className="cursor-pointer flex items-center gap-2 p-2.5 text-foreground hover:bg-accent hover:text-accent-foreground">
                                             <Settings className="mr-2 h-4 w-4" />
                                             <span>Settings</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="dark:border-slate-700" />
+                                        <DropdownMenuSeparator className="border-border" />
                                         <DropdownMenuItem
                                             onClick={() => {
                                                 // @ts-expect-error - Clerk is available globally
                                                 window.Clerk?.signOut();
                                             }}
-                                            className="cursor-pointer flex items-center justify-end gap-2 p-2.5 text-slate-800 dark:text-white dark:hover:bg-slate-800/70"
+                                            className="cursor-pointer flex items-center justify-end gap-2 p-2.5 text-foreground hover:bg-accent hover:text-accent-foreground"
                                         >
                                             <LogOut className="mr-2 h-4 w-4" />
                                             <span>Logout</span>
@@ -203,12 +203,12 @@ export default function Nav() {
                             className="md:hidden"
                         >
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
                                 onClick={() =>
                                     setIsMobileMenuOpen(!isMobileMenuOpen)
                                 }
-                                className="relative"
+                                className="relative h-9 w-9 rounded-full border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
                             >
                                 <AnimatePresence mode="wait">
                                     {isMobileMenuOpen ? (
@@ -222,7 +222,7 @@ export default function Nav() {
                                             exit={{ opacity: 0, rotate: 90 }}
                                             transition={{ duration: 0.2 }}
                                         >
-                                            <X className="h-6 w-6" />
+                                            <X className="h-[18px] w-[18px]" />
                                         </motion.div>
                                     ) : (
                                         <motion.div
@@ -232,7 +232,7 @@ export default function Nav() {
                                             exit={{ opacity: 0, rotate: -90 }}
                                             transition={{ duration: 0.2 }}
                                         >
-                                            <Menu className="h-6 w-6" />
+                                            <Menu className="h-[18px] w-[18px]" />
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -254,7 +254,7 @@ export default function Nav() {
                             stiffness: 300,
                             damping: 30,
                         }}
-                        className="md:hidden border-t border-border/30 bg-background/95 backdrop-blur-md"
+                        className="md:hidden border-t border-border bg-background/98 backdrop-blur-md shadow-md"
                     >
                         <div className="container mx-auto px-4 max-w-7xl py-2">
                             {!isSignedIn && (
@@ -264,8 +264,8 @@ export default function Nav() {
                             )}
                             {isSignedIn && (
                                 <div className="flex flex-col py-2">
-                                    <div className="px-2 py-3 border-b border-border/30 mb-2 flex items-center gap-3">
-                                        <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm">
+                                    <div className="px-2 py-3 border-b border-border mb-2 flex items-center gap-3">
+                                        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
                                             <AvatarImage
                                                 src={user?.imageUrl}
                                                 alt={user?.fullName || "User"}
@@ -278,12 +278,12 @@ export default function Nav() {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <p className="font-medium text-slate-900 dark:text-white">
+                                            <p className="font-medium text-foreground">
                                                 {user?.username ||
                                                     user?.fullName ||
                                                     "User"}
                                             </p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
+                                            <p className="text-sm text-muted-foreground truncate max-w-[200px]">
                                                 {user?.primaryEmailAddress
                                                     ?.emailAddress || ""}
                                             </p>
@@ -292,35 +292,35 @@ export default function Nav() {
 
                                     <Button
                                         variant="ghost"
-                                        className="flex items-center justify-start py-2.5 px-3 hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-lg mb-1"
+                                        className="flex items-center justify-start py-2.5 px-3 hover:bg-accent hover:text-accent-foreground rounded-lg mb-1"
                                         onClick={() => {
                                             navigate("/profile");
                                             setIsMobileMenuOpen(false);
                                         }}
                                     >
                                         <User className="h-4 w-4 mr-2" />
-                                        <span className="font-medium text-slate-800 dark:text-white">
+                                        <span className="font-medium text-foreground">
                                             Profile
                                         </span>
                                     </Button>
 
                                     <Button
                                         variant="ghost"
-                                        className="flex items-center justify-start py-2.5 px-3 hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-lg"
+                                        className="flex items-center justify-start py-2.5 px-3 hover:bg-accent hover:text-accent-foreground rounded-lg"
                                         onClick={() => {
                                             setIsMobileMenuOpen(false);
                                         }}
                                     >
                                         <Settings className="h-4 w-4 mr-2" />
-                                        <span className="font-medium text-slate-800 dark:text-white">
+                                        <span className="font-medium text-foreground">
                                             Settings
                                         </span>
                                     </Button>
 
-                                    <div className="mt-2 pt-2 border-t border-border/30">
+                                    <div className="mt-2 pt-2 border-t border-border">
                                         <Button
                                             variant="ghost"
-                                            className="w-full flex items-center justify-end py-2.5 px-3 hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-lg"
+                                            className="w-full flex items-center justify-end py-2.5 px-3 hover:bg-accent hover:text-accent-foreground rounded-lg"
                                             onClick={() => {
                                                 // @ts-expect-error - Clerk is available globally
                                                 window.Clerk?.signOut();
@@ -328,7 +328,7 @@ export default function Nav() {
                                             }}
                                         >
                                             <LogOut className="h-4 w-4 mr-2" />
-                                            <span className="font-medium text-slate-800 dark:text-white">
+                                            <span className="font-medium text-foreground">
                                                 Sign out
                                             </span>
                                         </Button>
