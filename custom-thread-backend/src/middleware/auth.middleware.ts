@@ -29,10 +29,16 @@ export const verifyAuth = async (req: AuthRequest, res: Response, next: NextFunc
 
         // Development-only code: Accept a test token
         // IMPORTANT: Remove this in production!
-        if (token === 'test_development_token' && process.env.NODE_ENV !== 'production') {
+        if (
+            (token === 'test_development_token' || token === 'admin_access_token') &&
+            process.env.NODE_ENV !== 'production'
+        ) {
             // Mock user for development
             req.auth = {
-                userId: 'dev_user_123', // Match existing orders in the database
+                userId:
+                    token === 'admin_access_token'
+                        ? process.env.ADMIN_USER_ID || 'admin_user_123'
+                        : 'dev_user_123',
                 sessionId: 'test_session_id',
                 getToken: () => Promise.resolve(token),
             };

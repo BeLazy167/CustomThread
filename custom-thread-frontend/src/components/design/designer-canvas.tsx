@@ -113,11 +113,11 @@ const DesignerCanvas: React.FC<AppProps> = ({
             if (!canvas) throw new Error("Canvas not found");
 
             const imageData = canvas.toDataURL("image/png");
-
+            console.log("user", user);
             await submitDesignMutation.mutateAsync(
                 {
                     imageData,
-                    username: user?.fullName || "Anonymous User",
+                    username: user?.username || "Anonymous User",
                 },
                 {
                     onSuccess: () => {

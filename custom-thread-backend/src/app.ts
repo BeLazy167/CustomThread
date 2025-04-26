@@ -14,6 +14,7 @@ import { v2 as cloudinary } from 'cloudinary';
 // Import routes
 import designRoutes from './routes/v1/design.routes';
 import orderRoutes from './routes/v1/order.routes';
+import reportRoutes from './routes/v1/report.routes';
 
 // Create Express app
 const app = express();
@@ -109,6 +110,7 @@ logger.info('API Configuration', {
 // Register API Routes with their respective prefixes
 app.use(`${API_PREFIX}/designs`, designRoutes);
 app.use(`${API_PREFIX}/orders`, orderRoutes);
+app.use(`${API_PREFIX}/reports`, reportRoutes);
 
 // Stripe webhook needs raw body
 app.post(

@@ -172,6 +172,35 @@ export default function Nav() {
                                             <User className="mr-2 h-4 w-4" />
                                             <span>Profile</span>
                                         </DropdownMenuItem>
+                                        {user?.publicMetadata?.role ===
+                                            "admin" && (
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    navigate("/reports/sales")
+                                                }
+                                                className="cursor-pointer flex items-center gap-2 p-2.5 text-foreground hover:bg-accent hover:text-accent-foreground"
+                                            >
+                                                <svg
+                                                    className="mr-2 h-4 w-4"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M3 3v18h18"></path>
+                                                    <path d="M18 9l-6-6-6 6"></path>
+                                                    <path d="M6 9v4"></path>
+                                                    <path d="M12 3v10"></path>
+                                                    <path d="M18 9v9"></path>
+                                                </svg>
+                                                <span>Reports</span>
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem className="cursor-pointer flex items-center gap-2 p-2.5 text-foreground hover:bg-accent hover:text-accent-foreground">
                                             <Settings className="mr-2 h-4 w-4" />
                                             <span>Settings</span>
@@ -303,6 +332,39 @@ export default function Nav() {
                                             Profile
                                         </span>
                                     </Button>
+
+                                    {user?.publicMetadata?.role === "admin" && (
+                                        <Button
+                                            variant="ghost"
+                                            className="flex items-center justify-start py-2.5 px-3 hover:bg-accent hover:text-accent-foreground rounded-lg mb-1"
+                                            onClick={() => {
+                                                navigate("/reports/sales");
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <svg
+                                                className="h-4 w-4 mr-2"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="24"
+                                                height="24"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M3 3v18h18"></path>
+                                                <path d="M18 9l-6-6-6 6"></path>
+                                                <path d="M6 9v4"></path>
+                                                <path d="M12 3v10"></path>
+                                                <path d="M18 9v9"></path>
+                                            </svg>
+                                            <span className="font-medium text-foreground">
+                                                Reports
+                                            </span>
+                                        </Button>
+                                    )}
 
                                     <Button
                                         variant="ghost"

@@ -126,7 +126,11 @@ const getClerkToken = async (): Promise<string | null> => {
 };
 
 const api = {
-    get: async (endpoint: string, params: QueryParams = {}) => {
+    get: async (
+        endpoint: string,
+        params: QueryParams = {},
+        customHeaders: Record<string, string> = {}
+    ) => {
         const url = new URL(`${API_URL}${endpoint}`);
         Object.keys(params).forEach((key) =>
             url.searchParams.append(key, String(params[key]))
@@ -135,9 +139,11 @@ const api = {
         const token = await getClerkToken();
         const headers: HeadersInit = {
             "Content-Type": "application/json",
+            ...customHeaders, // Add any custom headers
         };
 
-        if (token) {
+        // Only set the Authorization header if it's not already set in customHeaders
+        if (token && !customHeaders["Authorization"]) {
             headers["Authorization"] = `Bearer ${token}`;
         }
 
@@ -347,6 +353,81 @@ export const orderApi = {
             if (error instanceof Error && error.message.includes("401")) {
                 throw new Error(
                     "Authentication failed. Please sign in again to cancel your order."
+                );
+            }
+            throw error;
+        }
+    },
+};
+
+// Report API
+export interface ReportFilters {
+    startDate?: string;
+    endDate?: string;
+    designerId?: string;
+    designId?: string;
+    status?: string[];
+}
+
+export const reportApi = {
+    getSalesReport: async (filters: ReportFilters = {}) => {
+        try {
+            // Authentication temporarily disabled for development
+            return await api.get("/reports/sales", filters as any);
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("401")) {
+                throw new Error(
+                    "Authentication failed. Please sign in again to access reports."
+                );
+            }
+            if (error instanceof Error && error.message.includes("403")) {
+                throw new Error(
+                    "You don't have permission to access this report."
+                );
+            }
+            throw error;
+        }
+    },
+    getDesignerReport: async (
+        designerId: string,
+        filters: ReportFilters = {}
+    ) => {
+        try {
+            // Authentication temporarily disabled for development
+            return await api.get(
+                `/reports/designers/${designerId}`,
+                filters as any
+            );
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("401")) {
+                throw new Error(
+                    "Authentication failed. Please sign in again to access reports."
+                );
+            }
+            if (error instanceof Error && error.message.includes("403")) {
+                throw new Error(
+                    "You don't have permission to access this report."
+                );
+            }
+            throw error;
+        }
+    },
+    getDesignReport: async (designId: string, filters: ReportFilters = {}) => {
+        try {
+            // Authentication temporarily disabled for development
+            return await api.get(
+                `/reports/designs/${designId}`,
+                filters as any
+            );
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("401")) {
+                throw new Error(
+                    "Authentication failed. Please sign in again to access reports."
+                );
+            }
+            if (error instanceof Error && error.message.includes("403")) {
+                throw new Error(
+                    "You don't have permission to access this report."
                 );
             }
             throw error;

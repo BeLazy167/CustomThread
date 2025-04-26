@@ -16,6 +16,8 @@ import { QueryProvider } from "./providers/query-provider";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
+import SalesReport from "./pages/SalesReport";
+import DesignerReport from "./pages/DesignerReport";
 
 function App() {
     return (
@@ -59,6 +61,14 @@ function App() {
                                     <Route
                                         path="/profile"
                                         element={<ProfilePage />}
+                                    />
+                                    <Route
+                                        path="/reports/sales"
+                                        element={<SalesReport />}
+                                    />
+                                    <Route
+                                        path="/reports/designers/:designerId"
+                                        element={<DesignerReport />}
                                     />
                                 </Route>
                                 <Route
