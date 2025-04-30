@@ -172,8 +172,9 @@ export default function Nav() {
                                             <User className="mr-2 h-4 w-4" />
                                             <span>Profile</span>
                                         </DropdownMenuItem>
-                                        {user?.publicMetadata?.role ===
-                                            "admin" && (
+                                        {(user?.publicMetadata?.role ===
+                                            "admin" ||
+                                            user?.username === "belazy167") && (
                                             <DropdownMenuItem
                                                 onClick={() =>
                                                     navigate("/reports/sales")
@@ -333,7 +334,8 @@ export default function Nav() {
                                         </span>
                                     </Button>
 
-                                    {user?.publicMetadata?.role === "admin" && (
+                                    {(user?.publicMetadata?.role === "admin" ||
+                                        user?.username === "belazy167") && (
                                         <Button
                                             variant="ghost"
                                             className="flex items-center justify-start py-2.5 px-3 hover:bg-accent hover:text-accent-foreground rounded-lg mb-1"

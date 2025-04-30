@@ -72,6 +72,16 @@ VITE_ENVIRONMENT
 VITE_STRIPE_PUBLISHABLE_KEY
 ```
 
+### Environment Variables Usage
+
+These variables are used throughout the application for different purposes:
+
+-   **Cloudinary Variables**: Used for image upload and management in the design customization feature
+-   **Clerk Variables**: Used for authentication and user management
+-   **API URL**: Base URL for backend API requests
+-   **Environment**: Current environment (development, qa, production)
+-   **Stripe Variables**: Used for payment processing integration
+
 ### Accessing Environment Variables in React
 
 We've created a utility file at `src/utils/env.ts` to access environment variables in a consistent way:
@@ -111,7 +121,22 @@ CLERK_PUBLISHABLE_KEY
 STRIPE_SECRET_KEY
 STRIPE_PUBLISHABLE_KEY
 WEBHOOK_ENDPOINT_SECRET
+FRONTEND_URL
+ADMIN_USER_ID
 ```
+
+### Environment Variables Usage
+
+These variables are used throughout the backend for different purposes:
+
+-   **Server Configuration**: `NODE_ENV`, `PORT` control the server behavior
+-   **Database**: `MONGODB_URI` connects to the MongoDB database
+-   **CORS**: `CORS_ORIGIN` defines allowed origins for cross-origin requests
+-   **Cloudinary**: Used for image storage and processing
+-   **Clerk**: Used for authentication and user management
+-   **Stripe**: Used for payment processing
+-   **Frontend URL**: Used for redirects after payment processing
+-   **Admin Configuration**: Used to identify admin users
 
 ### Accessing Environment Variables in Node.js
 

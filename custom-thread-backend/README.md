@@ -1,6 +1,6 @@
 # CustomThread Backend
 
-A robust Node.js backend service for the CustomThread application, built with Express.js and TypeScript. This service handles design management, user authentication, image processing, and payment processing with Stripe.
+A robust Node.js backend service for the CustomThread application, built with Express.js and TypeScript. This service handles design management, user authentication, image processing, payment processing with Stripe, and sales/designer reporting.
 
 ## 🚀 Quick Start
 
@@ -25,21 +25,32 @@ src/
 ├── config/             # Configuration files
 │   ├── app.config.ts   # Application configuration
 │   ├── database.ts     # Database configuration
+│   ├── env.config.ts   # Environment variables
 │   └── logger.ts       # Logging configuration
 ├── controllers/        # Request handlers
 │   └── v1/            # API version 1 controllers
 │       ├── design.controller.ts  # Design management
-│       └── order.controller.ts   # Order & payment processing
+│       ├── order.controller.ts   # Order & payment processing
+│       └── report.controller.ts  # Sales & designer reports
 ├── middleware/         # Express middleware
-│   ├── auth.ts        # Authentication middleware
+│   ├── auth.ts         # Authentication middleware
+│   ├── auth.middleware.ts # New auth middleware
 │   ├── error.middleware.ts  # Error handling
-│   ├── isAdmin.ts     # Admin authorization
+│   ├── isAdmin.ts      # Admin authorization
+│   ├── request-logger.middleware.ts # Request logging
 │   └── validate-request.ts  # Request validation
 ├── models/            # MongoDB models
-│   ├── design.model.ts
-│   └── order.model.ts
+│   ├── design.model.ts # Design data model
+│   └── order.model.ts  # Order data model
 ├── routes/            # API routes
 │   └── v1/           # API version 1 routes
+│       ├── design.routes.ts  # Design endpoints
+│       ├── order.routes.ts   # Order endpoints
+│       └── report.routes.ts  # Report endpoints
+├── services/          # Business logic
+│   ├── design.service.ts  # Design service
+│   ├── order.service.ts   # Order service
+│   └── report.service.ts  # Report service
 ├── types/            # TypeScript type definitions
 ├── validators/       # Request validators
 ├── app.ts           # Express app setup
@@ -68,6 +79,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # Clerk Authentication
 CLERK_SECRET_KEY=your_clerk_secret_key
+CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 
 # Stripe Configuration
 STRIPE_SECRET_KEY=your_stripe_secret_key
@@ -92,10 +104,14 @@ We use [Clerk](https://clerk.dev/) for authentication. The authentication flow w
 3. User information is attached to the request object as `req.auth`
 4. Protected routes can access user data via `req.auth.userId`
 
-### Request Authentication Flow
+### Authentication Middleware Options
+
+The application provides two authentication middleware options:
+
+#### 1. `authenticate` Middleware (Legacy)
 
 ```typescript
-// Example protected route
+// Example protected route using legacy middleware
 router.post(
     '/designs',
     authenticate, // Clerk middleware
@@ -106,6 +122,29 @@ router.post(
 
 The `authenticate` middleware:
 
+- Validates the Bearer token
+- Extracts user information
+- Attaches it to `req.auth`
+- Rejects unauthorized requests with 401
+
+#### 2. `verifyAuth` Middleware (New)
+
+```typescript
+// Example protected route using new middleware
+router.get(
+    '/orders/user',
+    verifyAuth,
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+        // Access auth data via req.auth
+        const userId = req.auth?.userId;
+        // ...
+    }
+);
+```
+
+The `verifyAuth` middleware:
+
+- Provides TypeScript type safety with `AuthRequest` interface
 - Validates the Bearer token
 - Extracts user information
 - Attaches it to `req.auth`
@@ -125,6 +164,19 @@ The `isAdmin` middleware:
 - Checks if the authenticated user has admin privileges
 - Allows the request to proceed if the user is an admin
 - Returns a 403 Forbidden response if the user is not an admin
+
+### Username-Based Access Control
+
+Some routes, like the sales report, are restricted to specific usernames:
+
+```typescript
+// In the frontend component
+if (user?.username === 'belazy167') {
+    // Allow access to sales report
+} else {
+    // Redirect or show access denied
+}
+```
 
 ## 🎨 Design Submission
 
@@ -384,14 +436,38 @@ try {
 
 ### Designs API (`/api/v1/designs`)
 
-| Method | Endpoint | Description      | Auth Required | Request Body        | Response                                                                 |
-| ------ | -------- | ---------------- | ------------- | ------------------- | ------------------------------------------------------------------------ |
-| GET    | /        | List all designs | No            | -                   | `{ designs: Design[], total: number, page: number, totalPages: number }` |
-| POST   | /        | Create a design  | Yes           | `DesignCreateInput` | `Design`                                                                 |
-| GET    | /search  | Search designs   | No            | -                   | `{ designs: Design[], total: number, page: number, totalPages: number }` |
-| GET    | /:id     | Get design by ID | No            | -                   | `Design`                                                                 |
-| PATCH  | /:id     | Update design    | Yes           | `DesignUpdateInput` | `Design`                                                                 |
-| DELETE | /:id     | Delete design    | Yes           | -                   | `{ message: string }`                                                    |
+| Method | Endpoint      | Description         | Auth Required | Request Body        | Response                                                                 |
+| ------ | ------------- | ------------------- | ------------- | ------------------- | ------------------------------------------------------------------------ |
+| GET    | /             | List all designs    | No            | -                   | `{ designs: Design[], total: number, page: number, totalPages: number }` |
+| POST   | /             | Create a design     | Yes           | `DesignCreateInput` | `Design`                                                                 |
+| GET    | /search       | Search designs      | No            | -                   | `{ designs: Design[], total: number, page: number, totalPages: number }` |
+| GET    | /random       | Get random designs  | No            | -                   | `{ designs: Design[] }`                                                  |
+| GET    | /user/:userId | Get designs by user | No            | -                   | `{ designs: Design[], pagination: { total, page, limit, totalPages } }`  |
+| GET    | /:id          | Get design by ID    | No            | -                   | `Design`                                                                 |
+| PATCH  | /:id          | Update design       | Yes           | `DesignUpdateInput` | `Design`                                                                 |
+| DELETE | /:id          | Delete design       | Yes           | -                   | `{ message: string }`                                                    |
+
+### Orders API (`/api/v1/orders`)
+
+| Method | Endpoint         | Description             | Auth Required | Admin Only | Request Body             | Response                                 |
+| ------ | ---------------- | ----------------------- | ------------- | ---------- | ------------------------ | ---------------------------------------- |
+| GET    | /                | List all orders         | Yes           | No         | -                        | `{ orders: Order[], pagination: {...} }` |
+| GET    | /user            | Get user's orders       | Yes           | No         | -                        | `{ orders: Order[], pagination: {...} }` |
+| GET    | /:orderId        | Get order by ID         | Yes           | No         | -                        | `Order`                                  |
+| POST   | /checkout        | Create checkout session | Yes           | No         | `CheckoutSessionRequest` | `{ url: string }`                        |
+| PATCH  | /:orderId/cancel | Cancel an order         | Yes           | No         | -                        | `{ message: string, order: Order }`      |
+| PATCH  | /:orderId/status | Update order status     | Yes           | Yes        | `{ status: string }`     | `Order`                                  |
+| POST   | /webhook         | Stripe webhook handler  | No            | No         | Stripe Event             | `{ received: true }`                     |
+
+### Reports API (`/api/v1/reports`)
+
+| Method | Endpoint               | Description              | Auth Required | Admin Only | Request Body | Response                                      |
+| ------ | ---------------------- | ------------------------ | ------------- | ---------- | ------------ | --------------------------------------------- |
+| GET    | /sales                 | Generate sales report    | No\*          | No\*       | -            | `{ summary: {...}, salesByDate: [...], ... }` |
+| GET    | /designers/:designerId | Generate designer report | No\*          | No\*       | -            | `{ summary: {...}, salesByDate: [...], ... }` |
+| GET    | /designs/:designId     | Generate design report   | No\*          | No\*       | -            | `{ summary: {...}, salesByDate: [...], ... }` |
+
+\*Note: Authentication is temporarily disabled for development. In production, these endpoints will require authentication and proper authorization.
 
 ## ⚡ Performance Optimizations
 
